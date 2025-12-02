@@ -17,8 +17,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const prompt = buildPrompt(body.character_name, body.style);
 
     // 3. 调用 AI 模型 (Gemini)
-    // 实例化模型适配器
-    const aiModel = new GeminiModel(env.GEMINI_API_KEY); 
+    // 使用环境变量动态配置模型
+    const modelName = env.AI_MODEL_NAME || 'imagen-3.0-generate-001'; // 默认值
+    const baseUrl = env.AI_MODEL_URL || 'https://generativelanguage.googleapis.com/v1beta'; // 默认值
+    
+    const aiModel = new GeminiModel(env.GEMINI_API_KEY, modelName, baseUrl); 
     const imageBuffer = await aiModel.generateImage(prompt);
 
     // 4. 保存图片到 R2
