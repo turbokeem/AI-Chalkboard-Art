@@ -23,3 +23,10 @@ export interface Env {
   AI_MODEL_URL?: string; // 可选：自定义模型端点，默认使用 Google 官方 URL
   R2_PUBLIC_DOMAIN?: string; // 可选：R2公共访问域名，支持自定义域名
 }
+
+// KeyManager 支持
+export interface ApiKeyManager {
+  keys: string[];
+  currentIndex: number;
+  getNextKey(): string;
+}
