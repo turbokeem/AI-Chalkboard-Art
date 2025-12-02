@@ -19,5 +19,6 @@ export interface AIModelAdapter {
 export interface Env {
   GEMINI_API_KEY: string;
   R2_BUCKET: R2Bucket; // 绑定的 R2 存储桶
-  AI_MODEL_URL?: string; // 可选，自定义模型端点
+  AI_MODEL_NAME: string; // 必需：AI 模型名称 (如 gemini-3-pro-image-preview)
+  AI_MODEL_URL?: string; // 可选：自定义模型端点，默认使用 Google 官方 URL
 }
