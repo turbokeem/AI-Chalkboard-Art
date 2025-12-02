@@ -49,12 +49,17 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* 模糊背景特效 */
+        .backdrop-blur-custom {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen flex flex-col items-center justify-center p-4 relative">
 
     <!-- 主容器 -->
-    <div class="w-full max-w-4xl bg-[#18181b] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="w-full max-w-4xl bg-[#18181b] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-10">
         
         <!-- 头部区域 -->
         <div class="p-8 border-b border-gray-800 text-center">
@@ -78,7 +83,7 @@
                         <p class="mt-2 text-xs text-gray-500">输入动漫角色名称即可生成艺术画作。</p>
                     </div>
 
-                    <!-- 风格选择 (三种风格全部启用) -->
+                    <!-- 风格选择 -->
                     <div>
                         <label for="style" class="block text-sm font-medium text-gray-300 mb-2">绘画风格</label>
                         <div class="relative">
@@ -95,10 +100,14 @@
                     </div>
 
                     <!-- 生成按钮 -->
-                    <button type="submit" id="generateBtn"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span>生成作品</span>
-                    </button>
+                    <div>
+                        <button type="submit" id="generateBtn"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span>生成作品</span>
+                        </button>
+                        <!-- 计数器显示 -->
+                        <p id="limitCounter" class="text-center text-xs text-gray-500 mt-3">今日剩余免费额度: 3/3</p>
+                    </div>
                     
                     <!-- 状态信息 -->
                     <div id="statusMessage" class="hidden text-center text-sm p-3 rounded bg-gray-800 text-gray-300"></div>
@@ -138,11 +147,58 @@
                 <!-- 结果图片 -->
                 <img id="resultImage" class="hidden max-w-full max-h-[600px] rounded shadow-2xl border border-gray-800 object-contain" alt="Generated Art">
                 
-                <!-- 下载/操作栏 (图片生成后显示) -->
+                <!-- 下载/操作栏 -->
                 <div id="actionToolbar" class="hidden absolute bottom-4 right-4 flex space-x-2">
                     <a id="downloadLink" href="#" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full transition" title="查看完整尺寸">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="mt-8 text-center">
+        <a href="https://github.com/keenturbo/AI-Chalkboard-Art" target="_blank" class="text-gray-600 text-xs hover:text-gray-400 transition flex items-center justify-center space-x-1">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+            <span>Open Source on GitHub</span>
+        </a>
+    </footer>
+
+    <!-- 额度耗尽弹窗 (Modal) -->
+    <div id="limitModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-custom p-4">
+        <div class="bg-[#18181b] border border-gray-700 rounded-2xl shadow-2xl max-w-md w-full p-8 text-center transform transition-all scale-100 relative">
+            <!-- 关闭按钮 (可选，防止卡死) -->
+            <button onclick="closeLimitModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-900/30 text-blue-400 mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">今日灵感已耗尽</h2>
+                <p class="text-gray-400 text-sm">为了保证服务稳定，每天限制免费生成 3 次。<br>明天会自动重置额度哦！</p>
+            </div>
+
+            <div class="space-y-4">
+                <!-- 选项A: 硬核部署 -->
+                <a href="https://github.com/keenturbo/AI-Chalkboard-Art" target="_blank" class="block w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center space-x-2">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+                    <span>在 GitHub 上免费部署同款</span>
+                </a>
+
+                <!-- 选项B: 打赏支持 (展开逻辑) -->
+                <div class="relative">
+                    <button onclick="toggleDonate()" class="block w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center space-x-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <span>请作者喝杯咖啡 (支持开发)</span>
+                    </button>
+                    <!-- 隐藏的二维码区域 -->
+                    <div id="donateArea" class="hidden mt-4 p-4 bg-white rounded-lg animate-fade-in">
+                        <img src="https://pic.turbo.netlib.re/generated/IMG_4859.jpeg" alt="赞赏码" class="w-48 h-48 object-contain mx-auto">
+                        <p class="text-gray-800 text-xs mt-2 font-medium">微信 / 支付宝 扫一扫</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -158,40 +214,81 @@
         const loadingStep = document.getElementById('loadingStep');
         const actionToolbar = document.getElementById('actionToolbar');
         const downloadLink = document.getElementById('downloadLink');
+        const limitCounter = document.getElementById('limitCounter');
+        const limitModal = document.getElementById('limitModal');
+        const donateArea = document.getElementById('donateArea');
 
-        // 根据选择的风格更新加载步骤文本
+        const MAX_DAILY_LIMIT = 3;
+
+        // === 每日限额逻辑 ===
+        function getDailyUsage() {
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const storedDate = localStorage.getItem('last_usage_date');
+            
+            if (storedDate !== today) {
+                // 新的一天，重置
+                localStorage.setItem('last_usage_date', today);
+                localStorage.setItem('daily_count', '0');
+                return 0;
+            }
+            return parseInt(localStorage.getItem('daily_count') || '0', 10);
+        }
+
+        function incrementUsage() {
+            const count = getDailyUsage();
+            localStorage.setItem('daily_count', (count + 1).toString());
+            updateCounterUI();
+        }
+
+        function updateCounterUI() {
+            const used = getDailyUsage();
+            const remaining = Math.max(0, MAX_DAILY_LIMIT - used);
+            limitCounter.textContent = `今日剩余免费额度: \({remaining}/\){MAX_DAILY_LIMIT}`;
+            
+            if (remaining === 0) {
+                limitCounter.classList.add('text-red-500');
+            } else {
+                limitCounter.classList.remove('text-red-500');
+            }
+        }
+
+        function showLimitModal() {
+            limitModal.classList.remove('hidden');
+        }
+
+        function closeLimitModal() {
+            limitModal.classList.add('hidden');
+        }
+
+        function toggleDonate() {
+            donateArea.classList.toggle('hidden');
+        }
+
+        // 初始化计数器显示
+        updateCounterUI();
+
+        // === 原有逻辑 ===
+
         function updateLoadingSteps(style) {
             if (style === 'cloud') {
-                return [
-                    "分析云彩形态...",
-                    "调用 Gemini 模型...",
-                    "渲染天空光影...",
-                    "保存到 R2 存储...",
-                    "完成处理..."
-                ];
+                return ["分析云彩形态...", "调用 Gemini 模型...", "渲染天空光影...", "保存到 R2 存储...", "完成处理..."];
             } else if (style === 'textbook') {
-                return [
-                    "打开课本页面...",
-                    "调用 Gemini 模型...",
-                    "绘制铅笔涂鸦...",
-                    "添加纸张质感...",
-                    "完成处理..."
-                ];
+                return ["打开课本页面...", "调用 Gemini 模型...", "绘制铅笔涂鸦...", "添加纸张质感...", "完成处理..."];
             } else {
-                return [
-                    "生成提示词中...",
-                    "调用 Gemini 模型...",
-                    "渲染粉笔纹理...",
-                    "保存到 R2 存储...",
-                    "完成处理..."
-                ];
+                return ["生成提示词中...", "调用 Gemini 模型...", "渲染粉笔纹理...", "保存到 R2 存储...", "完成处理..."];
             }
         }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // 1. 检查额度
+            if (getDailyUsage() >= MAX_DAILY_LIMIT) {
+                showLimitModal();
+                return;
+            }
             
-            // 1. UI Reset
+            // 2. UI Reset
             const character = document.getElementById('character').value.trim();
             const style = document.getElementById('style').value;
             if (!character) return;
@@ -199,10 +296,7 @@
             setLoading(true);
             showStatus(null);
             
-            // 使用对应风格的加载步骤
             const steps = updateLoadingSteps(style);
-            
-            // 模拟进度条文本变化
             let stepIndex = 0;
             const stepInterval = setInterval(() => {
                 if (stepIndex < steps.length) {
@@ -211,8 +305,6 @@
             }, 1500);
 
             try {
-                // 2. API Call - 修复路径问题，使用绝对路径
-                // 在 Cloudflare Pages 上，Workers Functions 会在相同域名下提供服务
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -231,12 +323,13 @@
 
                 const data = await response.json();
 
-                // 3. Display Result
                 if (data.image_url) {
+                    // 3. 成功生成，扣除额度
+                    incrementUsage();
+
                     resultImage.src = data.image_url;
                     downloadLink.href = data.image_url;
                     
-                    // 图片加载完成后再显示
                     resultImage.onload = () => {
                         setLoading(false);
                         resultImage.classList.remove('hidden');
@@ -244,7 +337,6 @@
                         actionToolbar.classList.remove('hidden');
                     };
                     
-                    // 添加图片加载失败的处理
                     resultImage.onerror = () => {
                         setLoading(false);
                         showStatus('图片加载失败，请检查 R2 配置', 'error');
@@ -286,7 +378,6 @@
             statusMessage.classList.remove('hidden');
         }
 
-        // 监听风格变化，动态更新占位符文本
         document.getElementById('style').addEventListener('change', function(e) {
             const style = e.target.value;
             let placeholderText;
