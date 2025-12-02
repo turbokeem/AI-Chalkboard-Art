@@ -1,6 +1,6 @@
 # 🖼️AI Chalkboard Art Generator (AI 黑板画生成器)🖼️
 
-一个基于 Cloudflare 全栈架构 (Pages + Functions + R2) 的 AI 绘画应用。
+一个基于`Cloudflare`全栈架构 (Pages + Functions + R2) 的 AI 绘画应用。
 用户输入角色名称，AI 自动生成逼真的黑板粉笔画风格图像，并永久存储在云端。
 
 [![Deploy to Cloudflare Pages](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/keenturbo/AI-Chalkboard-Art)
