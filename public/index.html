@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chalkboard Art Generator</title>
+    <title>AI 粉笔画生成器</title>
     <!-- 引入 Tailwind CSS (无需构建，CDN直接引入) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Google Fonts -->
@@ -58,8 +58,8 @@
         
         <!-- 头部区域 -->
         <div class="p-8 border-b border-gray-800 text-center">
-            <h1 class="text-4xl font-bold tracking-tight text-white mb-2 chalk-effect">AI Chalkboard Art</h1>
-            <p class="text-gray-400 text-sm uppercase tracking-widest">Universal Generator • Gritty Realism</p>
+            <h1 class="text-4xl font-bold tracking-tight text-white mb-2 chalk-effect">AI 粉笔画生成器</h1>
+            <p class="text-gray-400 text-sm uppercase tracking-widest">基于 Gemini AI • 精准黑板粉画风格</p>
         </div>
 
         <!-- 核心交互区 -->
@@ -71,22 +71,22 @@
                     
                     <!-- 输入框 -->
                     <div>
-                        <label for="character" class="block text-sm font-medium text-gray-300 mb-2">Character Name</label>
+                        <label for="character" class="block text-sm font-medium text-gray-300 mb-2">动漫角色名称</label>
                         <input type="text" id="character" name="character" required
                             class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                            placeholder="e.g. Zootopia 2">
-                        <p class="mt-2 text-xs text-gray-500">Enter an anime character or subject.</p>
+                            placeholder="例如：疯狂动物城2">
+                        <p class="mt-2 text-xs text-gray-500">输入动漫角色名称即可生成黑板粉笔画。</p>
                     </div>
 
                     <!-- 风格选择 (预留接口) -->
                     <div>
-                        <label for="style" class="block text-sm font-medium text-gray-300 mb-2">Art Style</label>
+                        <label for="style" class="block text-sm font-medium text-gray-300 mb-2">绘画风格</label>
                         <div class="relative">
                             <select id="style" name="style" 
                                 class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                                <option value="blackboard" selected>🏫 Blackboard (Realism)</option>
-                                <option value="cloud" disabled>☁️ Cloud Art (Coming Soon)</option>
-                                <option value="sketch" disabled>✏️ Pencil Sketch (Coming Soon)</option>
+                                <option value="blackboard" selected>🏫 黑板粉笔画 (默认)</option>
+                                <option value="cloud" disabled>☁️ 云彩画风 (敬请期待)</option>
+                                <option value="sketch" disabled>✏️ 铅笔画风 (敬请期待)</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
@@ -97,7 +97,7 @@
                     <!-- 生成按钮 -->
                     <button type="submit" id="generateBtn"
                         class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span>Generate Artwork</span>
+                        <span>生成作品</span>
                     </button>
                     
                     <!-- 状态信息 -->
@@ -106,12 +106,12 @@
 
                 <!-- 说明文档 -->
                 <div class="mt-8 pt-6 border-t border-gray-700">
-                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">How it works</h3>
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">使用说明</h3>
                     <ul class="text-xs text-gray-500 space-y-2 list-disc list-inside">
-                        <li>Enter a character name.</li>
-                        <li>AI generates a realistic prompt.</li>
-                        <li>Gemini creates the blackboard art.</li>
-                        <li>Image is saved to Cloudflare R2.</li>
+                        <li>输入角色名称</li>
+                        <li>AI 生成提示词</li>
+                        <li>Gemini 绘制黑板画</li>
+                        <li>图片存储到 R2</li>
                     </ul>
                 </div>
             </div>
@@ -124,14 +124,14 @@
                     <div class="inline-block p-4 rounded-full bg-gray-800 mb-4">
                         <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     </div>
-                    <p class="text-gray-500">Your masterpiece will appear here</p>
+                    <p class="text-gray-500">您的黑板画作将在这里显示</p>
                 </div>
 
                 <!-- 加载中 -->
                 <div id="loadingState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-[#0f0f10] z-10">
                     <div class="loader mb-4"></div>
-                    <p class="text-blue-400 text-sm animate-pulse">Designing Prompt...</p>
-                    <p class="text-gray-600 text-xs mt-2" id="loadingStep">Connecting to Neural Network</p>
+                    <p class="text-blue-400 text-sm animate-pulse">正在设计提示词...</p>
+                    <p class="text-gray-600 text-xs mt-2" id="loadingStep">连接到神经网络</p>
                 </div>
 
                 <!-- 结果图片 -->
@@ -139,7 +139,7 @@
                 
                 <!-- 下载/操作栏 (图片生成后显示) -->
                 <div id="actionToolbar" class="hidden absolute bottom-4 right-4 flex space-x-2">
-                    <a id="downloadLink" href="#" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full transition" title="Open Full Size">
+                    <a id="downloadLink" href="#" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full transition" title="查看完整尺寸">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                     </a>
                 </div>
@@ -159,11 +159,11 @@
         const downloadLink = document.getElementById('downloadLink');
 
         const steps = [
-            "Generating Prompt...",
-            "Calling Gemini Model...",
-            "Rendering Chalk Texture...",
-            "Saving to R2 Storage...",
-            "Finalizing..."
+            "生成提示词中...",
+            "调用 Gemini 模型...",
+            "渲染粉笔纹理...",
+            "保存到 R2 存储...",
+            "完成处理..."
         ];
 
         form.addEventListener('submit', async (e) => {
@@ -186,8 +186,8 @@
             }, 1500);
 
             try {
-                // 2. API Call
-                // 注意：这里假设后端路由为 /api/generate
+                // 2. API Call - 修复路径问题，使用绝对路径
+                // 在 Cloudflare Pages 上，Workers Functions 会在相同域名下提供服务
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -201,7 +201,7 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'Generation failed');
+                    throw new Error(errorData.error || '生成失败');
                 }
 
                 const data = await response.json();
@@ -218,29 +218,35 @@
                         placeholder.classList.add('hidden');
                         actionToolbar.classList.remove('hidden');
                     };
+                    
+                    // 添加图片加载失败的处理
+                    resultImage.onerror = () => {
+                        setLoading(false);
+                        showStatus('图片加载失败，请检查 R2 配置', 'error');
+                    };
                 } else {
-                    throw new Error('No image URL returned');
+                    throw new Error('未返回图片URL');
                 }
 
             } catch (error) {
                 clearInterval(stepInterval);
                 setLoading(false);
                 showStatus(error.message, 'error');
-                console.error(error);
+                console.error('生成错误:', error);
             }
         });
 
         function setLoading(isLoading) {
             if (isLoading) {
                 generateBtn.disabled = true;
-                generateBtn.innerHTML = '<div class="loader border-t-white w-4 h-4 mr-2"></div> Processing...';
+                generateBtn.innerHTML = '<div class="loader border-t-white w-4 h-4 mr-2"></div> 正在生成...';
                 loadingState.classList.remove('hidden');
                 resultImage.classList.add('hidden');
                 actionToolbar.classList.add('hidden');
                 placeholder.classList.add('hidden');
             } else {
                 generateBtn.disabled = false;
-                generateBtn.innerHTML = '<span>Generate Artwork</span>';
+                generateBtn.innerHTML = '<span>生成作品</span>';
                 loadingState.classList.add('hidden');
             }
         }
