@@ -59,7 +59,7 @@
         <!-- 头部区域 -->
         <div class="p-8 border-b border-gray-800 text-center">
             <h1 class="text-4xl font-bold tracking-tight text-white mb-2 chalk-effect">AI 粉笔画生成器</h1>
-            <p class="text-gray-400 text-sm uppercase tracking-widest">基于 Gemini AI • 精准黑板粉画风格</p>
+            <p class="text-gray-400 text-sm uppercase tracking-widest">基于 Gemini AI • 多种艺术风格</p>
         </div>
 
         <!-- 核心交互区 -->
@@ -75,10 +75,10 @@
                         <input type="text" id="character" name="character" required
                             class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                             placeholder="例如：疯狂动物城2">
-                        <p class="mt-2 text-xs text-gray-500">输入动漫角色名称即可生成黑板粉笔画。</p>
+                        <p class="mt-2 text-xs text-gray-500">输入动漫角色名称即可生成艺术画作。</p>
                     </div>
 
-                    <!-- 风格选择 (云彩画已启用) -->
+                    <!-- 风格选择 (三种风格全部启用) -->
                     <div>
                         <label for="style" class="block text-sm font-medium text-gray-300 mb-2">绘画风格</label>
                         <div class="relative">
@@ -86,7 +86,7 @@
                                 class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
                                 <option value="blackboard" selected>🏫 黑板粉笔画 (默认)</option>
                                 <option value="cloud">☁️ 现实主义云彩</option>
-                                <option value="sketch" disabled>✏️ 铅笔画风 (敬请期待)</option>
+                                <option value="textbook">✏️ 课本铅笔画</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
@@ -109,8 +109,9 @@
                     <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">使用说明</h3>
                     <ul class="text-xs text-gray-500 space-y-2 list-disc list-inside">
                         <li>输入角色名称</li>
+                        <li>选择绘画风格</li>
                         <li>AI 生成提示词</li>
-                        <li>Gemini 绘制黑板画</li>
+                        <li>Gemini 绘制作品</li>
                         <li>图片存储到 R2</li>
                     </ul>
                 </div>
@@ -166,6 +167,14 @@
                     "调用 Gemini 模型...",
                     "渲染天空光影...",
                     "保存到 R2 存储...",
+                    "完成处理..."
+                ];
+            } else if (style === 'textbook') {
+                return [
+                    "打开课本页面...",
+                    "调用 Gemini 模型...",
+                    "绘制铅笔涂鸦...",
+                    "添加纸张质感...",
                     "完成处理..."
                 ];
             } else {
@@ -279,9 +288,15 @@
 
         // 监听风格变化，动态更新占位符文本
         document.getElementById('style').addEventListener('change', function(e) {
-            const placeholderText = e.target.value === 'cloud' ? 
-                '您的云彩画作将在这里显示' : 
-                '您的黑板画作将在这里显示';
+            const style = e.target.value;
+            let placeholderText;
+            if (style === 'cloud') {
+                placeholderText = '您的云彩画作将在这里显示';
+            } else if (style === 'textbook') {
+                placeholderText = '您的铅笔涂鸦将在这里显示';
+            } else {
+                placeholderText = '您的黑板画作将在这里显示';
+            }
             document.querySelector('#placeholder p').textContent = placeholderText;
         });
     </script>
