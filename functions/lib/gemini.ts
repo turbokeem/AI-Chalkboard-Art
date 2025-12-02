@@ -10,7 +10,7 @@ export class GeminiModel implements AIModelAdapter {
   // 如果官方发布了新模型 (如 gemini-3-pro-image)，只需更新这里的 MODEL_NAME
   private static readonly BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
   // 目前 Imagen 3 的标准 API 名称，根据实际情况可调整
-  private static readonly MODEL_NAME = 'imagen-3.0-generate-001'; 
+  private static readonly MODEL_NAME = 'gemini-3-pro-image-preview'; 
 
   constructor(apiKey: string) {
     if (!apiKey) {
