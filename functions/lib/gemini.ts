@@ -22,11 +22,11 @@ export class GeminiModel implements AIModelAdapter {
     const url = `${cleanBaseUrl}/${this.modelName}:generateContent?key=${this.apiKey}`;
 
     // 构造 Chat 格式请求
-    // 如果模型支持图像，通过 responseModalities: ['IMAGE'] 告诉它返回图片
+    // 移除硬编码风格描述，让提示词本身决定绘画风格
     const payload = {
       contents: [{
         parts: [{
-          text: `Generate a realistic blackboard chalk drawing of: ${prompt}`
+          text: `${prompt}`
         }]
       }],
       generationConfig: {
