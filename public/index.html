@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chalkboard Art Generator</title>
+    <!-- 引入 Tailwind CSS (无需构建，CDN直接引入) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        chalk: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            900: '#111827',
+                        },
+                        board: '#1a1a1a', // 近似黑板深色背景
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f0f10;
+            color: #e5e7eb;
+        }
+        .chalk-effect {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        /* 加载动画 */
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- 主容器 -->
+    <div class="w-full max-w-4xl bg-[#18181b] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+        
+        <!-- 头部区域 -->
+        <div class="p-8 border-b border-gray-800 text-center">
+            <h1 class="text-4xl font-bold tracking-tight text-white mb-2 chalk-effect">AI Chalkboard Art</h1>
+            <p class="text-gray-400 text-sm uppercase tracking-widest">Universal Generator • Gritty Realism</p>
+        </div>
+
+        <!-- 核心交互区 -->
+        <div class="flex flex-col md:flex-row">
+            
+            <!-- 左侧：控制面板 -->
+            <div class="w-full md:w-1/3 p-8 border-r border-gray-800 bg-[#202023]">
+                <form id="artForm" class="space-y-6">
+                    
+                    <!-- 输入框 -->
+                    <div>
+                        <label for="character" class="block text-sm font-medium text-gray-300 mb-2">Character Name</label>
+                        <input type="text" id="character" name="character" required
+                            class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            placeholder="e.g. Zootopia 2">
+                        <p class="mt-2 text-xs text-gray-500">Enter an anime character or subject.</p>
+                    </div>
+
+                    <!-- 风格选择 (预留接口) -->
+                    <div>
+                        <label for="style" class="block text-sm font-medium text-gray-300 mb-2">Art Style</label>
+                        <div class="relative">
+                            <select id="style" name="style" 
+                                class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                                <option value="blackboard" selected>🏫 Blackboard (Realism)</option>
+                                <option value="cloud" disabled>☁️ Cloud Art (Coming Soon)</option>
+                                <option value="sketch" disabled>✏️ Pencil Sketch (Coming Soon)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 生成按钮 -->
+                    <button type="submit" id="generateBtn"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>Generate Artwork</span>
+                    </button>
+                    
+                    <!-- 状态信息 -->
+                    <div id="statusMessage" class="hidden text-center text-sm p-3 rounded bg-gray-800 text-gray-300"></div>
+                </form>
+
+                <!-- 说明文档 -->
+                <div class="mt-8 pt-6 border-t border-gray-700">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">How it works</h3>
+                    <ul class="text-xs text-gray-500 space-y-2 list-disc list-inside">
+                        <li>Enter a character name.</li>
+                        <li>AI generates a realistic prompt.</li>
+                        <li>Gemini creates the blackboard art.</li>
+                        <li>Image is saved to Cloudflare R2.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 右侧：展示区域 -->
+            <div class="w-full md:w-2/3 p-8 flex items-center justify-center bg-[#0f0f10] min-h-[500px] relative">
+                
+                <!-- 占位符 -->
+                <div id="placeholder" class="text-center">
+                    <div class="inline-block p-4 rounded-full bg-gray-800 mb-4">
+                        <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <p class="text-gray-500">Your masterpiece will appear here</p>
+                </div>
+
+                <!-- 加载中 -->
+                <div id="loadingState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-[#0f0f10] z-10">
+                    <div class="loader mb-4"></div>
+                    <p class="text-blue-400 text-sm animate-pulse">Designing Prompt...</p>
+                    <p class="text-gray-600 text-xs mt-2" id="loadingStep">Connecting to Neural Network</p>
+                </div>
+
+                <!-- 结果图片 -->
+                <img id="resultImage" class="hidden max-w-full max-h-[600px] rounded shadow-2xl border border-gray-800 object-contain" alt="Generated Art">
+                
+                <!-- 下载/操作栏 (图片生成后显示) -->
+                <div id="actionToolbar" class="hidden absolute bottom-4 right-4 flex space-x-2">
+                    <a id="downloadLink" href="#" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full transition" title="Open Full Size">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('artForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const placeholder = document.getElementById('placeholder');
+        const loadingState = document.getElementById('loadingState');
+        const resultImage = document.getElementById('resultImage');
+        const statusMessage = document.getElementById('statusMessage');
+        const loadingStep = document.getElementById('loadingStep');
+        const actionToolbar = document.getElementById('actionToolbar');
+        const downloadLink = document.getElementById('downloadLink');
+
+        const steps = [
+            "Generating Prompt...",
+            "Calling Gemini Model...",
+            "Rendering Chalk Texture...",
+            "Saving to R2 Storage...",
+            "Finalizing..."
+        ];
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 1. UI Reset
+            const character = document.getElementById('character').value.trim();
+            const style = document.getElementById('style').value;
+            if (!character) return;
+
+            setLoading(true);
+            showStatus(null);
+            
+            // 模拟进度条文本变化
+            let stepIndex = 0;
+            const stepInterval = setInterval(() => {
+                if (stepIndex < steps.length) {
+                    loadingStep.textContent = steps[stepIndex++];
+                }
+            }, 1500);
+
+            try {
+                // 2. API Call
+                // 注意：这里假设后端路由为 /api/generate
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        character_name: character,
+                        style: style
+                    })
+                });
+
+                clearInterval(stepInterval);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Generation failed');
+                }
+
+                const data = await response.json();
+
+                // 3. Display Result
+                if (data.image_url) {
+                    resultImage.src = data.image_url;
+                    downloadLink.href = data.image_url;
+                    
+                    // 图片加载完成后再显示
+                    resultImage.onload = () => {
+                        setLoading(false);
+                        resultImage.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                        actionToolbar.classList.remove('hidden');
+                    };
+                } else {
+                    throw new Error('No image URL returned');
+                }
+
+            } catch (error) {
+                clearInterval(stepInterval);
+                setLoading(false);
+                showStatus(error.message, 'error');
+                console.error(error);
+            }
+        });
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<div class="loader border-t-white w-4 h-4 mr-2"></div> Processing...';
+                loadingState.classList.remove('hidden');
+                resultImage.classList.add('hidden');
+                actionToolbar.classList.add('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<span>Generate Artwork</span>';
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        function showStatus(msg, type = 'info') {
+            if (!msg) {
+                statusMessage.classList.add('hidden');
+                return;
+            }
+            statusMessage.textContent = msg;
+            statusMessage.className = `text-center text-sm p-3 rounded ${type === 'error' ? 'bg-red-900/50 text-red-200 border border-red-800' : 'bg-gray-800 text-gray-300'}`;
+            statusMessage.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
