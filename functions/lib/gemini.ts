@@ -33,10 +33,8 @@ export class GeminiModel implements AIModelAdapter {
    */
   private async generateWithGemini(prompt: string): Promise<ArrayBuffer> {
     const cleanBaseUrl = this.baseUrl.replace(/\/+$/, '');
-    // ⚠️ 注意：下面使用的是反引号 `
-    const url = `\({cleanBaseUrl}/\){this.modelName}:generateContent?key=${this.apiKey}`;
+    const url = `${cleanBaseUrl}/${this.modelName}:generateContent?key=${this.apiKey}`;
 
-    // 构造 Chat 格式请求，明确要求 IMAGE 模态
     const payload = {
       contents: [{
         parts: [{ text: `Generate a realistic blackboard chalk drawing of: ${prompt}` }]
@@ -55,7 +53,7 @@ export class GeminiModel implements AIModelAdapter {
 
     if (!response.ok) {
       const txt = await response.text();
-      throw new Error(`Gemini Chat API Failed: \({response.status} - \){txt}`);
+      throw new Error(`Gemini Chat API Failed: ${response.status} - ${txt}`);
     }
 
     const data = await response.json() as any;
@@ -79,8 +77,7 @@ export class GeminiModel implements AIModelAdapter {
    */
   private async generateWithImagen(prompt: string): Promise<ArrayBuffer> {
     const cleanBaseUrl = this.baseUrl.replace(/\/+$/, '');
-    // ⚠️ 注意：下面使用的是反引号 `
-    const url = `\({cleanBaseUrl}/\){this.modelName}:predict?key=${this.apiKey}`;
+    const url = `${cleanBaseUrl}/${this.modelName}:predict?key=${this.apiKey}`;
 
     const payload = {
       instances: [{ prompt: prompt }],
@@ -100,7 +97,7 @@ export class GeminiModel implements AIModelAdapter {
 
     if (!response.ok) {
       const txt = await response.text();
-      throw new Error(`Imagen API Failed: \({response.status} - \){txt}`);
+      throw new Error(`Imagen API Failed: ${response.status} - ${txt}`);
     }
 
     const data = await response.json() as any;
