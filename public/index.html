@@ -54,6 +54,44 @@
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
+        /* 走马灯动画 */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-image {
+            position: absolute;
+            opacity: 0;
+            animation: carousel-fade 8s infinite;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(55, 65, 81, 0.5);
+            max-width: 90%;
+            max-height: 300px;
+            object-fit: contain;
+        }
+        .carousel-image:nth-child(1) { animation-delay: 0s; }
+        .carousel-image:nth-child(2) { animation-delay: 2s; }
+        .carousel-image:nth-child(3) { animation-delay: 4s; }
+        .carousel-image:nth-child(4) { animation-delay: 6s; }
+        
+        @keyframes carousel-fade {
+            0%, 20% { opacity: 0; transform: scale(0.8); }
+            25%, 45% { opacity: 1; transform: scale(1); }
+            50%, 100% { opacity: 0; transform: scale(0.8); }
+        }
+        /* 下载按钮动画 */
+        .download-btn {
+            animation: pulse-download 2s infinite;
+        }
+        @keyframes pulse-download {
+            0%, 50%, 100% { transform: translateY(0px); }
+            25%, 75% { transform: translateY(-3px); }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4 relative">
@@ -137,18 +175,47 @@
                     <p class="text-gray-500">您的画作将在这里显示</p>
                 </div>
 
-                <!-- 加载中 -->
+                <!-- 加载中：优化版走马灯 -->
                 <div id="loadingState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-[#0f0f10] z-10">
-                    <div class="loader mb-4"></div>
-                    <p class="text-blue-400 text-sm animate-pulse">正在设计提示词...</p>
-                    <p class="text-gray-600 text-xs mt-2" id="loadingStep">连接到神经网络</p>
+                    <!-- 走马灯背景 -->
+                    <div id="carouselContainer" class="carousel-container mb-6">
+                        <!-- 默认显示1-4张示例图 -->
+                        <img src="https://pic.turbo.netlib.re/generated/IMG_4859.jpeg" class="carousel-image" alt="作品示例">
+                        <img src="https://pic.turbo.netlib.re/generated/IMG_4859.jpeg" class="carousel-image" alt="作品示例">
+                        <img src="https://pic.turbo.netlib.re/generated/IMG_4859.jpeg" class="carousel-image" alt="作品示例">
+                        <img src="https://pic.turbo.netlib.re/generated/IMG_4859.jpeg" class="carousel-image" alt="作品示例">
+                    </div>
+                    
+                    <!-- 进度信息 -->
+                    <div class="text-center">
+                        <div class="flex items-center justify-center space-x-3 mb-3">
+                            <div class="loader"></div>
+                            <p class="text-blue-400 text-sm animate-pulse font-medium">正在设计提示词...</p>
+                        </div>
+                        <p class="text-gray-600 text-xs animate-fade-in" id="loadingStep">连接到神经网络</p>
+                        <div class="mt-2 w-64 mx-auto">
+                            <div class="w-full bg-gray-700/50 rounded-full h-1">
+                                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 h-1 rounded-full transition-all duration-500" id="progressBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-2">欣赏往期作品，耐心等待您的专属创作...</p>
+                    </div>
                 </div>
 
                 <!-- 结果图片 -->
                 <img id="resultImage" class="hidden max-w-full max-h-[600px] rounded shadow-2xl border border-gray-800 object-contain" alt="Generated Art">
                 
-                <!-- 下载/操作栏 -->
+                <!-- 下载/操作栏：增加直接下载按钮 -->
                 <div id="actionToolbar" class="hidden absolute bottom-4 right-4 flex space-x-2">
+                    <!-- 直接下载按钮 -->
+                    <button id="directDownloadBtn" 
+                        class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white p-2 rounded-full transition download-btn flex items-center justify-center" 
+                        title="直接下载图片">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                    </button>
+                    <!-- 查看大图按钮 -->
                     <a id="downloadLink" href="#" target="_blank" class="bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-full transition" title="查看完整尺寸">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                     </a>
@@ -214,11 +281,42 @@
         const loadingStep = document.getElementById('loadingStep');
         const actionToolbar = document.getElementById('actionToolbar');
         const downloadLink = document.getElementById('downloadLink');
+        const directDownloadBtn = document.getElementById('directDownloadBtn');
         const limitCounter = document.getElementById('limitCounter');
         const limitModal = document.getElementById('limitModal');
         const donateArea = document.getElementById('donateArea');
+        const carouselContainer = document.getElementById('carouselContainer');
+        const progressBar = document.getElementById('progressBar');
 
         const MAX_DAILY_LIMIT = 3;
+
+        // === 作品走马灯数据：轻量级本地存储，不频繁请求API ===
+        const SAMPLE_IMAGES = [
+            // 使用你的赞赏码图片作为示例（实际应该替换为真实作品示例）
+            'https://pic.turbo.netlib.re/generated/IMG_4859.jpeg',
+            'https://pic.turbo.netlib.re/generated/IMG_4859.jpeg',
+            'https://pic.turbo.netlib.re/generated/IMG_4859.jpeg',
+            'https://pic.turbo.netlib.re/generated/IMG_4859.jpeg'
+        ];
+
+        // 获取最近的生成作品（如果需要动态加载）
+        async function loadRecentWorks() {
+            // 轻量级实现：仅当有新作品时缓存最近3张到sessionStorage，减少重复请求
+            const recentWorks = JSON.parse(sessionStorage.getItem('recentWorks') || '[]');
+            
+            if (recentWorks.length === 0) {
+                return SAMPLE_IMAGES;
+            }
+            return [...recentWorks, ...SAMPLE_IMAGES].slice(0, 8);
+        }
+
+        // 更新走马灯图片
+        async function updateCarousel() {
+            const images = await loadRecentWorks();
+            carouselContainer.innerHTML = images.slice(0, 4).map((src, index) => `
+                <img src="${src}" class="carousel-image" alt="作品示例 ${index + 1}">
+            `).join('');
+        }
 
         // === 每日限额逻辑 ===
         function getDailyUsage() {
@@ -264,11 +362,17 @@
             donateArea.classList.toggle('hidden');
         }
 
-        // 初始化计数器显示
-        updateCounterUI();
+        // === 下载功能：新增直接下载 ===
+        function downloadImage(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename || `ai-chalkboard-${Date.now()}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         // === 原有逻辑 ===
-
         function updateLoadingSteps(style) {
             if (style === 'cloud') {
                 return ["分析云彩形态...", "调用 Gemini 模型...", "渲染天空光影...", "保存到 R2 存储...", "完成处理..."];
@@ -296,11 +400,17 @@
             setLoading(true);
             showStatus(null);
             
+            // 更新走马灯，展示新作品
+            await updateCarousel();
+            
             const steps = updateLoadingSteps(style);
             let stepIndex = 0;
             const stepInterval = setInterval(() => {
                 if (stepIndex < steps.length) {
-                    loadingStep.textContent = steps[stepIndex++];
+                    const step = steps[stepIndex++];
+                    loadingStep.textContent = step;
+                    // 更新进度条
+                    progressBar.style.width = `${(stepIndex / steps.length) * 100}%`;
                 }
             }, 1500);
 
@@ -327,8 +437,18 @@
                     // 3. 成功生成，扣除额度
                     incrementUsage();
 
+                    // 缓存最新作品到sessionStorage，供走马灯使用
+                    const recentWorks = JSON.parse(sessionStorage.getItem('recentWorks') || '[]');
+                    if (!recentWorks.includes(data.image_url)) {
+                        recentWorks.unshift(data.image_url);
+                        sessionStorage.setItem('recentWorks', JSON.stringify(recentWorks.slice(0, 3)));
+                    }
+
                     resultImage.src = data.image_url;
                     downloadLink.href = data.image_url;
+                    
+                    // 设置直接下载按钮
+                    directDownloadBtn.onclick = () => downloadImage(data.image_url, `ai-chalkboard-${character}-${style}.jpg`);
                     
                     resultImage.onload = () => {
                         setLoading(false);
@@ -361,6 +481,8 @@
                 resultImage.classList.add('hidden');
                 actionToolbar.classList.add('hidden');
                 placeholder.classList.add('hidden');
+                // 重置进度条
+                progressBar.style.width = '0%';
             } else {
                 generateBtn.disabled = false;
                 generateBtn.innerHTML = '<span>生成作品</span>';
@@ -378,6 +500,7 @@
             statusMessage.classList.remove('hidden');
         }
 
+        // 监听风格变化，动态更新占位符文本
         document.getElementById('style').addEventListener('change', function(e) {
             const style = e.target.value;
             let placeholderText;
@@ -390,6 +513,10 @@
             }
             document.querySelector('#placeholder p').textContent = placeholderText;
         });
+
+        // 初始化
+        updateCounterUI();
+        updateCarousel();
     </script>
 </body>
 </html>
