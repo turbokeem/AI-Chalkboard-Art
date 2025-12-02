@@ -17,14 +17,17 @@ export function buildPrompt(characterName: string, style: string = 'blackboard')
 // 核心：黑板画提示词模板
 function buildBlackboardPrompt(name: string): string {
   return `
-    "A raw, documentary-style close-up photograph of a classroom. 
+    "A raw, documentary-style Medium Shot of a classroom. 
     The focal point is a large, slightly worn green blackboard with visible cloudy white eraser smudges and chalk residue on the surface. 
-    Drawn on this textured surface is a masterpiece chalk art of ${name}. 
+    Drawn on this textured surface is a striking chalk art of ${name}. 
     
-    CRITICAL STYLE: The character is rendered in a 'High-Density Soft Pastel' style with solid, opaque coverage. 
-    - The face, skin, and body are FULLY FILLED with thick, layered chalk application, completely covering the green board background.
-    - Use vibrant, true-to-life colors (e.g., orange, cream, brown for fur/skin) to create a rich, 3D volumetric look.
-    - No outline-only drawing; this is a fully colored chalk painting with impasto texture.
+    The character is depicted in a Dynamic Signature Pose.
+    
+    CRITICAL STYLE: 'Sketchy but Solid' chalk coverage.
+    - The face and body are FULLY FILLED with color, but the texture is rough and scratchy.
+    - Instead of smooth blending, use visible hatched lines and cross-hatching to fill the areas.
+    - The edges are slightly messy and loose, showing the speed of the drawing.
+    - Use vibrant colors mixed with white chalk, but maintain a dry, dusty, powdery look (not oily or shiny).
 
     To the right, vertical Chinese text '${name}' is written in hand-written chalk calligraphy. 
     The foreground is out of focus, featuring the worn edge of an old wooden podium with a battered box of colorful chalks and scattered broken pieces. 
