@@ -2,12 +2,8 @@ import { AIModelAdapter } from '../types';
 
 export class GeminiModel implements AIModelAdapter {
   private apiKey: string;
-  // 保持 Google 官方 API 地址
-  private static readonly BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-  // 修改为用户指定的模型 ID
-  private static readonly MODEL_NAME = 'gemini-3-pro-image-preview'; 
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, private modelName: string, private baseUrl: string) {
     if (!apiKey) {
       throw new Error('Gemini API Key is missing');
     }
@@ -15,8 +11,8 @@ export class GeminiModel implements AIModelAdapter {
   }
 
   async generateImage(prompt: string): Promise<ArrayBuffer> {
-    // 这里的 URL 结构保持: /models/[model_id]:predict
-    const url = `\({GeminiModel.BASE_URL}/\){GeminiModel.MODEL_NAME}:predict?key=${this.apiKey}`;
+    // 构造模型预测 URL
+    const url = `${this.baseUrl}/models/${this.modelName}:predict?key=${this.apiKey}`;
 
     const payload = {
       instances: [
@@ -34,7 +30,7 @@ export class GeminiModel implements AIModelAdapter {
     };
 
     try {
-      console.log(`[Gemini] Sending request to ${GeminiModel.MODEL_NAME}...`);
+      console.log(`[Gemini] Sending request to ${this.modelName} at ${this.baseUrl}...`);
       
       const response = await fetch(url, {
         method: 'POST',
@@ -47,7 +43,7 @@ export class GeminiModel implements AIModelAdapter {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('[Gemini] API Error:', response.status, errorText);
-        throw new Error(`Gemini API Failed: \({response.status} - \){errorText}`);
+        throw new Error(`Gemini API Failed: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json() as any;
