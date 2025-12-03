@@ -116,9 +116,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         let config: AdminConfig = DEFAULT_CONFIG;
         
         try {
+            console.log('开始读取KV配置...');
             const stored = await env.ADMIN_KV.get('admin_config');
             if (stored) {
                 config = JSON.parse(stored);
+                console.log('成功读取KV配置，当前管理员:', config.admin_credentials.username);
+            } else {
+                console.log('KV中没有存储配置，使用默认配置');
             }
         } catch (error) {
             console.error('读取配置失败，使用默认配置:', error);
@@ -128,8 +132,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
             headers: { 
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
-                'Access-Control-Allow-Headers': 'Content-Type'
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
             }
         });
         
@@ -147,8 +151,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const { request, env } = context;
         const body = await request.json();
         
+        console.log('收到POST请求:', { hasUsername: !!body.username, hasPassword: !!body.password, hasConfig: !!body.config });
+        
         // 验证权限
         if (!body.username || !body.password) {
+            console.log('缺少用户名或密码');
             return new Response(JSON.stringify({ error: '需要用户名和密码' }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
@@ -158,9 +165,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         // 获取当前配置进行验证
         let config: AdminConfig = DEFAULT_CONFIG;
         try {
+            console.log('验证管理员凭证，开始读取当前配置...');
             const stored = await env.ADMIN_KV.get('admin_config');
             if (stored) {
                 config = JSON.parse(stored);
+                console.log('读取到KV配置，当前用户:', config.admin_credentials.username);
+            } else {
+                console.log('使用默认配置进行验证');
             }
         } catch (error) {
             console.error('读取配置失败:', error);
@@ -169,25 +180,35 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         // 验证管理员凭证
         if (body.username !== config.admin_credentials.username || 
             body.password !== config.admin_credentials.password) {
+            console.log('认证失败，提供的:', body.username, body.password, '期望:', config.admin_credentials.username, config.admin_credentials.password);
             return new Response(JSON.stringify({ error: '用户名或密码错误' }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
         
+        console.log('认证成功！');
+        
         // 更新配置
         if (body.config) {
             try {
+                console.log('开始保存配置到KV...');
+                console.log('新配置的管理员:', body.config.admin_credentials?.username);
+                
                 await env.ADMIN_KV.put('admin_config', JSON.stringify(body.config));
+                console.log('配置保存成功！');
+                
                 return new Response(JSON.stringify({ success: true, message: '配置更新成功' }), {
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
                     }
                 });
             } catch (error) {
                 console.error('保存配置失败:', error);
-                return new Response(JSON.stringify({ error: '保存配置失败' }), {
+                return new Response(JSON.stringify({ error: '保存配置失败: ' + error.message }), {
                     status: 500,
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -198,27 +219,32 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         return new Response(JSON.stringify(config), {
             headers: { 
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization'
             }
         });
         
     } catch (error) {
         console.error('保存配置失败:', error);
-        return new Response(JSON.stringify({ error: '保存配置失败' }), { 
+        return new Response(JSON.stringify({ error: '保存配置失败: ' + error.message }), { 
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
     }
 };
 
-// 新增：添加 PUT 方法支持
+// 新增：添加 PUT 方法支持（用于密码修改）
 export const onRequestPut: PagesFunction<Env> = async (context) => {
     try {
         const { request, env } = context;
         const body = await request.json();
         
+        console.log('收到PUT请求:', { hasUsername: !!body.username, hasPassword: !!body.password });
+        
         // 验证权限
         if (!body.username || !body.password) {
+            console.log('PUT请求缺少用户名或密码');
             return new Response(JSON.stringify({ error: '需要用户名和密码' }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
@@ -228,53 +254,55 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
         // 获取当前配置进行验证
         let config: AdminConfig = DEFAULT_CONFIG;
         try {
+            console.log('PUT验证管理员凭证，开始读取当前配置...');
             const stored = await env.ADMIN_KV.get('admin_config');
             if (stored) {
                 config = JSON.parse(stored);
+                console.log('PUT读取到KV配置，当前用户:', config.admin_credentials.username);
+            } else {
+                console.log('PUT使用默认配置进行验证');
             }
         } catch (error) {
-            console.error('读取配置失败:', error);
+            console.error('PUT读取配置失败:', error);
         }
         
         // 验证管理员凭证
         if (body.username !== config.admin_credentials.username || 
             body.password !== config.admin_credentials.password) {
+            console.log('PUT认证失败');
             return new Response(JSON.stringify({ error: '用户名或密码错误' }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
         
+        console.log('PUT认证成功！');
+        
         // 更新配置
-        if (body.config) {
-            try {
-                await env.ADMIN_KV.put('admin_config', JSON.stringify(body.config));
-                return new Response(JSON.stringify({ success: true, message: '配置更新成功' }), {
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    }
-                });
-            } catch (error) {
-                console.error('保存配置失败:', error);
-                return new Response(JSON.stringify({ error: '保存配置失败' }), {
-                    status: 500,
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            }
+        try {
+            console.log('PUT开始保存配置到KV...');
+            await env.ADMIN_KV.put('admin_config', JSON.stringify(body.config || config));
+            console.log('PUT配置保存成功！');
+            
+            return new Response(JSON.stringify({ success: true, message: '配置更新成功' }), {
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+                }
+            });
+        } catch (error) {
+            console.error('PUT保存配置失败:', error);
+            return new Response(JSON.stringify({ error: '保存配置失败: ' + error.message }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
         
-        // 只返回配置（用于验证）
-        return new Response(JSON.stringify(config), {
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
-        });
-        
     } catch (error) {
-        console.error('保存配置失败:', error);
-        return new Response(JSON.stringify({ error: '保存配置失败' }), { 
+        console.error('PUT保存配置失败:', error);
+        return new Response(JSON.stringify({ error: '保存配置失败: ' + error.message }), { 
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
@@ -286,7 +314,7 @@ export const onRequestOptions: PagesFunction<Env> = async () => {
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         }
     });
 };
