@@ -411,9 +411,12 @@
 
                     if (response.ok) {
                         const result = await response.json();
+                        console.log('服务器保存结果:', result);
                         return result.success;
                     } else {
-                        throw new Error('保存到服务器失败');
+                        const errorData = await response.json().catch(() => ({ error: '未知错误' }));
+                        console.error('服务器保存失败:', response.status, errorData);
+                        throw new Error(`保存失败: ${errorData.error}`);
                     }
                 } catch (error) {
                     console.error('保存配置失败:', error);
