@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - AI 粉笔画生成器</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        chalk: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            900: '#111827',
+                        },
+                        board: '#1a1a1a',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f0f10;
+            color: #e5e7eb;
+        }
+        .chalk-effect {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .backdrop-blur-custom {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+        /* 登录页面背景动画 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+        /* 管理标签页样式 */
+        .tab-active {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+        .config-card {
+            background: rgba(30, 30, 35, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(55, 65, 81, 0.5);
+            transition: all 0.3s ease;
+        }
+        .config-card:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative">
+    
+    <!-- 背景装饰 -->
+    <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-indigo-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- 登录容器 -->
+    <div id="loginContainer" class="w-full max-w-md relative z-10">
+        <div class="bg-[#18181b] border border-gray-800 rounded-2xl shadow-2xl p-8 fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white mb-4 float-animation">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white mb-2 chalk-effect">管理后台</h1>
+                <p class="text-gray-500 text-sm">AI 粉笔画生成器配置中心</p>
+            </div>
+
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-300 mb-2">用户名</label>
+                    <input type="text" id="username" name="username" required
+                        class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        placeholder="请输入用户名">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">密码</label>
+                    <input type="password" id="password" name="password" required
+                        class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        placeholder="请输入密码">
+                </div>
+
+                <div id="loginError" class="hidden text-red-400 text-sm p-3 rounded bg-red-900/30 border border-red-800/50"></div>
+
+                <div id="defaultWarning" class="hidden p-3 rounded bg-yellow-900/30 border border-yellow-800/50">
+                    <p class="text-yellow-300 text-sm mb-2">⚠️ 安全提醒</p>
+                    <p class="text-yellow-200 text-xs">您正在使用默认账号登录，建议立即修改为自定义用户名和密码以确保安全。</p>
+                </div>
+
+                <button type="submit" id="loginBtn"
+                    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 hover-scale">
+                    <span>登录管理后台</span>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t border-gray-700 text-center">
+                <p class="text-gray-500 text-xs">默认账号: admin@admin</p>
+                <p class="text-gray-600 text-xs mt-1">首次登录后请及时修改</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理界面容器 -->
+    <div id="adminContainer" class="hidden w-full max-w-6xl relative z-10">
+        <div class="bg-[#18181b] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden fade-in">
+            
+            <!-- 头部导航 -->
+            <div class="p-6 border-b border-gray-800">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white chalk-effect">配置管理</h1>
+                        <p class="text-gray-500 text-sm mt-1">AI 粉笔画生成器 • 管理中心</p>
+                    </div>
+                    <button id="logoutBtn" class="bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-lg transition border border-red-800/50 hover:border-red-700">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        退出登录
+                    </button>
+                </div>
+
+                <!-- 标签页导航 -->
+                <div class="flex space-x-2">
+                    <button class="tab-btn tab-active px-4 py-2 rounded-lg font-medium transition" data-tab="gallery">
+                        📸 图片管理
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 transition" data-tab="api">
+                        🔌 API配置
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 transition" data-tab="prompts">
+                        ✏️ 提示词管理
+                    </button>
+                    <button class="tab-btn px-4 py-2 rounded-lg font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 transition" data-tab="settings">
+                        ⚙️ 基础设置
+                    </button>
+                </div>
+            </div>
+
+            <!-- 管理内容区 -->
+            <div class="p-6">
+                <!-- 图片管理 -->
+                <div id="galleryTab" class="tab-content">
+                    <div class="config-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            跑马灯示例图片管理
+                        </h3>
+                        
+                        <div class="mb-4">
+                            <div class="flex space-x-2">
+                                <input type="url" id="newImageUrl" placeholder="请输入图片网址 (https://...)" 
+                                    class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button id="addImageBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
+                                    添加图片
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="imageList" class="space-y-2 max-h-96 overflow-y-auto">
+                            <!-- 图片列表将由JavaScript动态生成 -->
+                        </div>
+
+                        <div class="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-800/50">
+                            <p class="text-blue-300 text-sm">
+                                💡 提示：添加新图片后，用户访问页面时会随机展示这些示例作品，保持内容新鲜感。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API配置 -->
+                <div id="apiTab" class="tab-content hidden">
+                    <div class="config-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            第三方API配置
+                        </h3>
+                        
+                        <div class="mb-6">
+                            <button id="addApiBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                                + 添加新API
+                            </button>
+                        </div>
+
+                        <div id="apiList" class="space-y-4">
+                            <div class="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="font-medium text-white flex items-center">
+                                        <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                                        Google Gemini (默认)
+                                    </h4>
+                                    <span class="text-green-400 text-sm">✓ 启用</span>
+                                </div>
+                                <p class="text-gray-400 text-sm">Google官方文生图模型，无需额外配置</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-800/50">
+                            <p class="text-blue-300 text-sm">
+                                💡 可以添加Grok、元宝豆包等多个文生图模型，系统会自动调用可用的API。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提示词管理 -->
+                <div id="promptsTab" class="tab-content hidden">
+                    <div class="config-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            风格提示词管理
+                        </h3>
+
+                        <div class="mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <input type="text" id="promptName" placeholder="提示词名称 (如: 水彩画风)" 
+                                    class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="text" id="promptKey" placeholder="提示词键值 (如: watercolor)" 
+                                    class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button id="addPromptBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                                    添加提示词
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="promptList" class="space-y-3">
+                            <!-- 提示词列表将由JavaScript动态生成 -->
+                        </div>
+
+                        <div class="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-800/50">
+                            <p class="text-blue-300 text-sm">
+                                💡 新增提示词会自动同步到前端选择菜单，用户可以选择更多绘画风格。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 基础设置 -->
+                <div id="settingsTab" class="tab-content hidden">
+                    <div class="config-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            基础设置
+                        </h3>
+
+                        <!-- 登录凭证 -->
+                        <div class="mb-6">
+                            <h4 class="text-md font-medium text-gray-300 mb-3">登录凭证实名</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="text" id="newUsername" placeholder="新用户名" 
+                                    class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="password" id="newPassword" placeholder="新密码" 
+                                    class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <button id="updateCredentialsBtn" class="mt-3 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition">
+                                更新登录凭证
+                            </button>
+                        </div>
+
+                        <!-- 配置备份 -->
+                        <div class="mb-6">
+                            <h4 class="text-md font-medium text-gray-300 mb-3">配置备份</h4>
+                            <div class="flex space-x-2">
+                                <button id="exportConfigBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                                    导出配置
+                                </button>
+                                <button id="importConfigBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                                    导入配置
+                                </button>
+                            </div>
+                            <input type="file" id="configFileInput" accept=".json" class="hidden">
+                        </div>
+
+                        <!-- 系统信息 -->
+                        <div>
+                            <h4 class="text-md font-medium text-gray-300 mb-3">系统信息</h4>
+                            <div class="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span class="text-gray-400">版本:</span>
+                                        <span class="text-white ml-2">v1.0.0</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">当前用户:</span>
+                                        <span id="currentUser" class="text-white ml-2">admin@admin</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">配置数量:</span>
+                                        <span id="configCount" class="text-white ml-2">0</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">最后更新:</span>
+                                        <span id="lastUpdate" class="text-white ml-2">暂未更新</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 状态提示 -->
+    <div id="statusMessage" class="hidden fixed top-4 right-4 z-50 p-4 rounded-lg border shadow-lg fade-in"></div>
+
+    <script>
+        // === 全局配置管理 ===
+        class ConfigManager {
+            constructor() {
+                this.credentials = this.loadCredentials();
+                this.images = this.loadImages();
+                this.apis = this.loadApis();
+                this.prompts = this.loadPrompts();
+            }
+
+            loadCredentials() {
+                const stored = localStorage.getItem('adminCredentials');
+                if (stored) {
+                    return JSON.parse(stored);
+                }
+                // 默认凭证
+                return { username: 'admin', password: 'admin' };
+            }
+
+            saveCredentials(credentials) {
+                localStorage.setItem('adminCredentials', JSON.stringify(credentials));
+                this.credentials = credentials;
+            }
+
+            loadImages() {
+                const stored = localStorage.getItem('adminImages');
+                return stored ? JSON.parse(stored) : [];
+            }
+
+            saveImages(images) {
+                localStorage.setItem('adminImages', JSON.stringify(images));
+                this.images = images;
+            }
+
+            loadApis() {
+                const stored = localStorage.getItem('adminApis');
+                return stored ? JSON.parse(stored) : [];
+            }
+
+            saveApis(apis) {
+                localStorage.setItem('adminApis', JSON.stringify(apis));
+                this.apis = apis;
+            }
+
+            loadPrompts() {
+                const stored = localStorage.getItem('adminPrompts');
+                return stored ? JSON.parse(stored) : [];
+            }
+
+            savePrompts(prompts) {
+                localStorage.setItem('adminPrompts', JSON.stringify(prompts));
+                this.prompts = prompts;
+            }
+
+            exportConfig() {
+                const config = {
+                    images: this.images,
+                    apis: this.apis,
+                    prompts: this.prompts,
+                    exportTime: new Date().toISOString()
+                };
+                return JSON.stringify(config, null, 2);
+            }
+
+            importConfig(configJson) {
+                try {
+                    const config = JSON.parse(configJson);
+                    this.saveImages(config.images || []);
+                    this.saveApis(config.apis || []);
+                    this.savePrompts(config.prompts || []);
+                    return true;
+                } catch (error) {
+                    console.error('导入配置失败:', error);
+                    return false;
+                }
+            }
+        }
+
+        // === 初始化配置管理器 ===
+        const configManager = new ConfigManager();
+        let isAuthenticated = false;
+
+        // === DOM 元素 ===
+        const loginContainer = document.getElementById('loginContainer');
+        const adminContainer = document.getElementById('adminContainer');
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const defaultWarning = document.getElementById('defaultWarning');
+        const statusMessage = document.getElementById('statusMessage');
+        const currentUser = document.getElementById('currentUser');
+        const configCount = document.getElementById('configCount');
+        const lastUpdate = document.getElementById('lastUpdate');
+
+        // === 认证功能 ===
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            // 显示默认账号警告
+            if (username === 'admin' && password === 'admin') {
+                defaultWarning.classList.remove('hidden');
+                loginError.classList.add('hidden');
+                // 继续登录流程，但提示修改密码
+            } else if (username === 'admin' && password === 'admin') {
+                defaultWarning.classList.remove('hidden');
+                loginError.classList.add('hidden');
+            }
+
+            // 验证凭据
+            if (username === configManager.credentials.username && 
+                password === configManager.credentials.password) {
+                
+                isAuthenticated = true;
+                currentUser.textContent = `${configManager.credentials.username}@admin`;
+                
+                // 切换界面
+                loginContainer.classList.add('hidden');
+                adminContainer.classList.remove('hidden');
+                
+                // 初始化管理界面
+                initializeAdminUI();
+                
+                showStatus('登录成功！', 'success');
+            } else {
+                loginError.textContent = '用户名或密码错误，请重试';
+                loginError.classList.remove('hidden');
+                showStatus('登录失败，请检查凭据', 'error');
+            }
+        });
+
+        // === 退出登录 ===
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            isAuthenticated = false;
+            adminContainer.classList.add('hidden');
+            loginContainer.classList.remove('hidden');
+            
+            // 清空表单
+            loginForm.reset();
+            loginError.classList.add('hidden');
+            defaultWarning.classList.add('hidden');
+            
+            showStatus('已安全退出登录', 'info');
+        });
+
+        // === 标签页切换 ===
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetTab = this.dataset.tab;
+                
+                // 更新按钮状态
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('tab-active');
+                    b.classList.add('bg-gray-800', 'text-gray-300', 'hover:bg-gray-700');
+                });
+                this.classList.add('tab-active');
+                this.classList.remove('bg-gray-800', 'text-gray-300', 'hover:bg-gray-700');
+                
+                // 显示对应内容
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(targetTab + 'Tab').classList.remove('hidden');
+            });
+        });
+
+        // === 初始化管理界面 ===
+        function initializeAdminUI() {
+            renderImageList();
+            renderApiList();
+            renderPromptList();
+            updateSystemInfo();
+        }
+
+        // === 图片管理功能 ===
+        document.getElementById('addImageBtn').addEventListener('click', function() {
+            const input = document.getElementById('newImageUrl');
+            const url = input.value.trim();
+            
+            if (!url) {
+                showStatus('请输入有效的图片网址', 'error');
+                return;
+            }
+
+            if (!url.startsWith('https://') && !url.startsWith('http://')) {
+                showStatus('请输入以 http:// 或 https:// 开头的完整网址', 'error');
+                return;
+            }
+
+            if (configManager.images.includes(url)) {
+                showStatus('该图片已存在于列表中', 'warning');
+                return;
+            }
+
+            configManager.images.push(url);
+            configManager.saveImages(configManager.images);
+            
+            input.value = '';
+            renderImageList();
+            updateSystemInfo();
+            
+            showStatus('图片添加成功', 'success');
+        });
+
+        function renderImageList() {
+            const imageList = document.getElementById('imageList');
+            
+            if (configManager.images.length === 0) {
+                imageList.innerHTML = '<p class="text-gray-500 text-center py-4">暂无自定义图片，请添加示例作品</p>';
+                return;
+            }
+
+            imageList.innerHTML = configManager.images.map((url, index) => `
+                <div class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <div class="flex items-center flex-1">
+                        <img src="${url}" alt="示例图片" class="w-12 h-12 object-cover rounded mr-3 bg-gray-700">
+                        <div class="flex-1">
+                            <p class="text-white text-sm break-all">${url}</p>
+                            <p class="text-gray-500 text-xs">示例图片 #${index + 1}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeImage(${index})" class="text-red-400 hover:text-red-300 ml-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeImage(index) {
+            configManager.images.splice(index, 1);
+            configManager.saveImages(configManager.images);
+            renderImageList();
+            updateSystemInfo();
+            showStatus('图片已移除', 'info');
+        }
+
+        // === API配置功能 ===
+        document.getElementById('addApiBtn').addEventListener('click', function() {
+            showStatus('API配置功能开发中...', 'info');
+        });
+
+        function renderApiList() {
+            // API列表渲染（目前只是Google默认）
+            // 实际功能将在后端API端点支持后实现
+        }
+
+        // === 提示词管理功能 ===
+        document.getElementById('addPromptBtn').addEventListener('click', function() {
+            const name = document.getElementById('promptName').value.trim();
+            const key = document.getElementById('promptKey').value.trim();
+            
+            if (!name || !key) {
+                showStatus('请填写完整的提示词名称和键值', 'error');
+                return;
+            }
+
+            if (configManager.prompts.find(p => p.key === key)) {
+                showStatus('该提示词键值已存在，请使用其他键值', 'warning');
+                return;
+            }
+
+            const newPrompt = {
+                name: name,
+                key: key,
+                prompt: '', // 实际内容需要在后端同步
+                created: new Date().toISOString()
+            };
+
+            configManager.prompts.push(newPrompt);
+            configManager.savePrompts(configManager.prompts);
+            
+            document.getElementById('promptName').value = '';
+            document.getElementById('promptKey').value = '';
+            
+            renderPromptList();
+            updateSystemInfo();
+            
+            showStatus('提示词添加成功', 'success');
+        });
+
+        function renderPromptList() {
+            const promptList = document.getElementById('promptList');
+            
+            // 显示默认提示词
+            const defaultPrompts = [
+                { name: '黑板粉笔画', key: 'blackboard', isDefault: true },
+                { name: '现实主义云彩', key: 'cloud', isDefault: true },
+                { name: '课本铅笔画', key: 'textbook', isDefault: true }
+            ];
+            
+            const allPrompts = [...defaultPrompts, ...configManager.prompts];
+            
+            promptList.innerHTML = allPrompts.map((prompt, index) => `
+                <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <div>
+                        <h4 class="text-white font-medium flex items-center">
+                            ${prompt.isDefault ? '<span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>' : ''}
+                            ${prompt.name}
+                        </h4>
+                        <p class="text-gray-500 text-sm">键值: ${prompt.key}</p>
+                        ${prompt.isDefault ? '<span class="text-green-400 text-xs">默认风格</span>' : '<span class="text-gray-400 text-xs">自定义风格</span>'}
+                    </div>
+                    ${!prompt.isDefault ? `<button onclick="removePrompt(${index - 3})" class="text-red-400 hover:text-red-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function removePrompt(index) {
+            configManager.prompts.splice(index, 1);
+            configManager.savePrompts(configManager.prompts);
+            renderPromptList();
+            updateSystemInfo();
+            showStatus('提示词已移除', 'info');
+        }
+
+        // === 基础设置功能 ===
+        document.getElementById('updateCredentialsBtn').addEventListener('click', function() {
+            const newUsername = document.getElementById('newUsername').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            
+            if (!newUsername || !newPassword) {
+                showStatus('请填写完整的用户名和密码', 'error');
+                return;
+            }
+
+            // 验证用户名格式
+            if (newUsername.length < 3) {
+                showStatus('用户名至少需要3个字符', 'error');
+                return;
+            }
+
+            if (newPassword.length < 4) {
+                showStatus('密码至少需要4个字符', 'error');
+                return;
+            }
+
+            configManager.saveCredentials({ username: newUsername, password: newPassword });
+            
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            
+            currentUser.textContent = `${newUsername}@admin`;
+            
+            showStatus('登录凭证更新成功！下次登录请使用新凭据', 'success');
+        });
+
+        // === 配置备份功能 ===
+        document.getElementById('exportConfigBtn').addEventListener('click', function() {
+            const configJson = configManager.exportConfig();
+            const blob = new Blob([configJson], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ai-chalkboard-config-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showStatus('配置已导出', 'success');
+        });
+
+        document.getElementById('importConfigBtn').addEventListener('click', function() {
+            document.getElementById('configFileInput').click();
+        });
+
+        document.getElementById('configFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const configJson = event.target.result;
+                
+                if (configManager.importConfig(configJson)) {
+                    renderImageList();
+                    renderApiList();
+                    renderPromptList();
+                    updateSystemInfo();
+                    showStatus('配置导入成功', 'success');
+                } else {
+                    showStatus('配置导入失败，请检查文件格式', 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+            e.target.value = ''; // 清空input以便重复选择
+        });
+
+        // === 工具函数 ===
+        function updateSystemInfo() {
+            const totalConfigs = configManager.images.length + configManager.prompts.length;
+            configCount.textContent = totalConfigs.toString();
+            
+            const lastUpdate = localStorage.getItem('lastConfigUpdate');
+            if (lastUpdate) {
+                document.getElementById('lastUpdate').textContent = new Date(lastUpdate).toLocaleString();
+            } else {
+                document.getElementById('lastUpdate').textContent = '暂未更新';
+            }
+            
+            // 更新最后更新时间
+            localStorage.setItem('lastConfigUpdate', new Date().toISOString());
+        }
+
+        function showStatus(message, type = 'info') {
+            statusMessage.textContent = message;
+            statusMessage.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg border shadow-lg fade-in';
+            
+            switch(type) {
+                case 'success':
+                    statusMessage.classList.add('bg-green-900/90', 'text-green-200', 'border-green-800/50');
+                    break;
+                case 'error':
+                    statusMessage.classList.add('bg-red-900/90', 'text-red-200', 'border-red-800/50');
+                    break;
+                case 'warning':
+                    statusMessage.classList.add('bg-yellow-900/90', 'text-yellow-200', 'border-yellow-800/50');
+                    break;
+                default:
+                    statusMessage.classList.add('bg-blue-900/90', 'text-blue-200', 'border-blue-800/50');
+            }
+            
+            statusMessage.classList.remove('hidden');
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                statusMessage.classList.add('hidden');
+            }, 3000);
+        }
+
+        // === 页面加载完成后 ===
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置默认用户名提示
+            document.getElementById('username').placeholder = '默认: admin';
+            
+            // 如果有已保存的凭证，显示提示
+            if (configManager.credentials.username !== 'admin' || configManager.credentials.password !== 'admin') {
+                const usernameInput = document.getElementById('username');
+                const username = configManager.credentials.username;
+                usernameInput.placeholder = `已配置: ${username}`;
+            }
+        });
+
+        // === 键盘快捷键支持 ===
+        document.addEventListener('keydown', function(e) {
+            // 在登录界面支持Enter键提交
+            if (!isAuthenticated && e.key === 'Enter') {
+                const activeElement = document.activeElement;
+                if (activeElement.tagName === 'INPUT' && activeElement.form === loginForm) {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            }
+            // ESC键关闭状态提示
+            if (e.key === 'Escape' && !statusMessage.classList.contains('hidden')) {
+                statusMessage.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
