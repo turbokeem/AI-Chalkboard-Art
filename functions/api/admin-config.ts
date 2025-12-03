@@ -12,7 +12,8 @@ interface AdminConfig {
     }>;
     prompts: Array<{
         name: string;
-        prompt: string;
+        key: string;     // 键值（blackboard、cloud等）
+        prompt: string;  // 完整提示词内容
     }>;
     admin_credentials: {
         username: string;
@@ -87,15 +88,18 @@ const DEFAULT_CONFIG: AdminConfig = {
     prompts: [
         {
             name: '黑板粉笔画',
-            prompt: 'blackboard'
+            key: 'blackboard',
+            prompt: ''
         },
         {
             name: '现实主义云彩',
-            prompt: 'cloud'
+            key: 'cloud',
+            prompt: ''
         },
         {
             name: '课本铅笔画',
-            prompt: 'textbook'
+            key: 'textbook',
+            prompt: ''
         }
     ],
     admin_credentials: {
