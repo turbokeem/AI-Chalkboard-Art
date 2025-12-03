@@ -386,9 +386,9 @@
                         'https://pic.icon.pp.ua/generated/IMG_4912.jpeg'
                     ],
                     prompts: [
-                        { name: '黑板粉笔画', prompt: 'blackboard' },
-                        { name: '现实主义云彩', prompt: 'cloud' },
-                        { name: '课本铅笔画', prompt: 'textbook' }
+                        { name: '黑板粉笔画', key: 'blackboard', prompt: '' },
+                        { name: '现实主义云彩', key: 'cloud', prompt: '' },
+                        { name: '课本铅笔画', key: 'textbook', prompt: '' }
                     ]
                 };
                 updateStyleOptions();
@@ -402,9 +402,9 @@
             
             SITE_CONFIG.prompts.forEach(prompt => {
                 const option = document.createElement('option');
-                option.value = prompt.prompt;
+                option.value = prompt.key;
                 option.textContent = prompt.name;
-                option.selected = prompt.prompt === 'blackboard';
+                option.selected = prompt.key === 'blackboard';
                 styleSelect.appendChild(option);
             });
         }
