@@ -54,7 +54,7 @@
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
-        /* 走马灯动画 - 调整每张图片显示时间改为20秒 */
+        /* 走马灯动画 - 调整每张图片显示时间改为25秒 */
         .carousel-container {
             position: relative;
             width: 100%;
@@ -66,7 +66,7 @@
         .carousel-image {
             position: absolute;
             opacity: 0;
-            animation: carousel-fade 20s infinite;
+            animation: carousel-fade 25s infinite;
             border-radius: 1rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(55, 65, 81, 0.5);
@@ -75,35 +75,35 @@
             object-fit: contain;
         }
         .carousel-image:nth-child(1) { animation-delay: 0s; }
-        .carousel-image:nth-child(2) { animation-delay: 6.67s; }
-        .carousel-image:nth-child(3) { animation-delay: 13.33s; }
-        .carousel-image:nth-child(4) { animation-delay: 20s; }
-        .carousel-image:nth-child(5) { animation-delay: 26.67s; }
-        .carousel-image:nth-child(6) { animation-delay: 33.33s; }
-        .carousel-image:nth-child(7) { animation-delay: 40s; }
-        .carousel-image:nth-child(8) { animation-delay: 46.67s; }
-        .carousel-image:nth-child(9) { animation-delay: 53.33s; }
-        .carousel-image:nth-child(10) { animation-delay: 60s; }
-        .carousel-image:nth-child(11) { animation-delay: 66.67s; }
-        .carousel-image:nth-child(12) { animation-delay: 73.33s; }
-        .carousel-image:nth-child(13) { animation-delay: 80s; }
-        .carousel-image:nth-child(14) { animation-delay: 86.67s; }
-        .carousel-image:nth-child(15) { animation-delay: 93.33s; }
-        .carousel-image:nth-child(16) { animation-delay: 100s; }
-        .carousel-image:nth-child(17) { animation-delay: 106.67s; }
-        .carousel-image:nth-child(18) { animation-delay: 113.33s; }
-        .carousel-image:nth-child(19) { animation-delay: 120s; }
-        .carousel-image:nth-child(20) { animation-delay: 126.67s; }
-        .carousel-image:nth-child(21) { animation-delay: 133.33s; }
-        .carousel-image:nth-child(22) { animation-delay: 140s; }
-        .carousel-image:nth-child(23) { animation-delay: 146.67s; }
-        .carousel-image:nth-child(24) { animation-delay: 153.33s; }
-        .carousel-image:nth-child(25) { animation-delay: 160s; }
-        .carousel-image:nth-child(26) { animation-delay: 166.67s; }
-        .carousel-image:nth-child(27) { animation-delay: 173.33s; }
-        .carousel-image:nth-child(28) { animation-delay: 180s; }
-        .carousel-image:nth-child(29) { animation-delay: 186.67s; }
-        .carousel-image:nth-child(30) { animation-delay: 193.33s; }
+        .carousel-image:nth-child(2) { animation-delay: 8.33s; }
+        .carousel-image:nth-child(3) { animation-delay: 16.67s; }
+        .carousel-image:nth-child(4) { animation-delay: 25s; }
+        .carousel-image:nth-child(5) { animation-delay: 33.33s; }
+        .carousel-image:nth-child(6) { animation-delay: 41.67s; }
+        .carousel-image:nth-child(7) { animation-delay: 50s; }
+        .carousel-image:nth-child(8) { animation-delay: 58.33s; }
+        .carousel-image:nth-child(9) { animation-delay: 66.67s; }
+        .carousel-image:nth-child(10) { animation-delay: 75s; }
+        .carousel-image:nth-child(11) { animation-delay: 83.33s; }
+        .carousel-image:nth-child(12) { animation-delay: 91.67s; }
+        .carousel-image:nth-child(13) { animation-delay: 100s; }
+        .carousel-image:nth-child(14) { animation-delay: 108.33s; }
+        .carousel-image:nth-child(15) { animation-delay: 116.67s; }
+        .carousel-image:nth-child(16) { animation-delay: 125s; }
+        .carousel-image:nth-child(17) { animation-delay: 133.33s; }
+        .carousel-image:nth-child(18) { animation-delay: 141.67s; }
+        .carousel-image:nth-child(19) { animation-delay: 150s; }
+        .carousel-image:nth-child(20) { animation-delay: 158.33s; }
+        .carousel-image:nth-child(21) { animation-delay: 166.67s; }
+        .carousel-image:nth-child(22) { animation-delay: 175s; }
+        .carousel-image:nth-child(23) { animation-delay: 183.33s; }
+        .carousel-image:nth-child(24) { animation-delay: 191.67s; }
+        .carousel-image:nth-child(25) { animation-delay: 200s; }
+        .carousel-image:nth-child(26) { animation-delay: 208.33s; }
+        .carousel-image:nth-child(27) { animation-delay: 216.67s; }
+        .carousel-image:nth-child(28) { animation-delay: 225s; }
+        .carousel-image:nth-child(29) { animation-delay: 233.33s; }
+        .carousel-image:nth-child(30) { animation-delay: 241.67s; }
         
         @keyframes carousel-fade {
             0%, 3.33% { opacity: 0; transform: scale(0.8); }
@@ -132,22 +132,22 @@
         .hover-scale:hover {
             transform: scale(1.05);
         }
-        /* 占位符背景图样式 - 移除宽度限制 */
+        /* 占位符背景图样式 - 改为contain显示完整图片 */
         .placeholder-bg {
             background-image: url('https://pic.icon.pp.ua/generated/IMG_4874.jpeg');
-            background-size: cover !important;
+            background-size: contain !important;
             background-position: center !important;
             background-repeat: no-repeat !important;
             position: relative;
-            min-height: 500px !important;
+            min-height: 400px !important;
             width: 100% !important;
-            height: 100% !important;
+            height: auto !important;
         }
         .placeholder-bg::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.4); /* 遮罩层 */
+            background: rgba(0, 0, 0, 0.3); /* 减少遮罩透明度 */
             border-radius: 1rem;
         }
         .placeholder-content {
@@ -595,7 +595,7 @@
                     
                     // 设置下载按钮点击事件，修复文件后缀问题 - 删除了.jpg硬编码
                     downloadBtn.onclick = () => {
-                        const filename = `ai-chalkboard-${character.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '-')}-${style}`;
+                        const filename = `ai-chalkboard-${character.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '-')}-${style}.png`;
                         downloadImage(data.image_url, filename);
                     };
                     
