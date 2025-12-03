@@ -127,7 +127,7 @@
             </form>
 
             <div class="mt-6 pt-6 border-t border-gray-700 text-center">
-                <p class="text-gray-500 text-xs">默认账号: admin@admin</p>
+                <p class="text-gray-500 text-xs">默认账号: admin/admin</p>
                 <p class="text-gray-600 text-xs mt-1">首次登录后请及时修改</p>
             </div>
         </div>
@@ -251,14 +251,22 @@
                         </h3>
 
                         <div class="mb-6">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <input type="text" id="promptName" placeholder="提示词名称 (如: 水彩画风)" 
-                                    class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <input type="text" id="promptKey" placeholder="提示词键值 (如: watercolor)" 
-                                    class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <button id="addPromptBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-                                    添加提示词
-                                </button>
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <input type="text" id="promptName" placeholder="提示词名称 (如: 水彩画风)" 
+                                        class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <input type="text" id="promptKey" placeholder="提示词键值 (如: watercolor)" 
+                                        class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <button id="addPromptBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                                        添加提示词
+                                    </button>
+                                </div>
+                                <div>
+                                    <label for="promptContent" class="block text-sm font-medium text-gray-300 mb-2">完整提示词内容 (可选)</label>
+                                    <textarea id="promptContent" placeholder="输入完整的提示词内容，留空将使用内置模板。支持变量 ${name}" 
+                                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 h-32 resize-vertical"
+                                        rows="4"></textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -268,7 +276,7 @@
 
                         <div class="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-800/50">
                             <p class="text-blue-300 text-sm">
-                                💡 新增提示词会自动同步到前端选择菜单，用户可以选择更多绘画风格。
+                                💡 新增提示词会自动同步到前端选择菜单，支持完整的自定义提示词内容。
                             </p>
                         </div>
                     </div>
@@ -349,54 +357,75 @@
         // === 全局配置管理 ===
         class ConfigManager {
             constructor() {
-                this.credentials = this.loadCredentials();
-                this.images = this.loadImages();
-                this.apis = this.loadApis();
-                this.prompts = this.loadPrompts();
+                this.loadFromServer();
             }
 
-            loadCredentials() {
-                const stored = localStorage.getItem('adminCredentials');
-                if (stored) {
-                    return JSON.parse(stored);
+            async loadFromServer() {
+                try {
+                    // 从服务器获取当前配置
+                    const response = await fetch('/api/admin-config');
+                    if (response.ok) {
+                        const config = await response.json();
+                        this.serverConfig = config;
+                        this.images = config.gallery_images || [];
+                        this.apis = config.api_configs || [];
+                        this.prompts = config.prompts || [];
+                        this.credentials = config.admin_credentials || { username: 'admin', password: 'admin' };
+                    } else {
+                        throw new Error('获取配置失败');
+                    }
+                } catch (error) {
+                    console.error('加载配置失败:', error);
+                    // 使用本地缓存作为降级方案
+                    this.loadFromLocal();
                 }
-                // 默认凭证
-                return { username: 'admin', password: 'admin' };
             }
 
-            saveCredentials(credentials) {
-                localStorage.setItem('adminCredentials', JSON.stringify(credentials));
-                this.credentials = credentials;
+            loadFromLocal() {
+                this.images = JSON.parse(localStorage.getItem('adminImages') || '[]');
+                this.apis = JSON.parse(localStorage.getItem('adminApis') || '[]');
+                this.prompts = JSON.parse(localStorage.getItem('adminPrompts') || '[]');
+                this.credentials = JSON.parse(localStorage.getItem('adminCredentials') || '{"username":"admin","password":"admin"}');
             }
 
-            loadImages() {
-                const stored = localStorage.getItem('adminImages');
-                return stored ? JSON.parse(stored) : [];
+            async saveToServer() {
+                try {
+                    const config = {
+                        gallery_images: this.images,
+                        api_configs: this.apis,
+                        prompts: this.prompts,
+                        admin_credentials: this.credentials
+                    };
+
+                    const response = await fetch('/api/admin-config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: configManager.credentials.username,
+                            password: configManager.credentials.password,
+                            config: config
+                        })
+                    });
+
+                    if (response.ok) {
+                        const result = await response.json();
+                        return result.success;
+                    } else {
+                        throw new Error('保存到服务器失败');
+                    }
+                } catch (error) {
+                    console.error('保存配置失败:', error);
+                    return false;
+                }
             }
 
-            saveImages(images) {
-                localStorage.setItem('adminImages', JSON.stringify(images));
-                this.images = images;
-            }
-
-            loadApis() {
-                const stored = localStorage.getItem('adminApis');
-                return stored ? JSON.parse(stored) : [];
-            }
-
-            saveApis(apis) {
-                localStorage.setItem('adminApis', JSON.stringify(apis));
-                this.apis = apis;
-            }
-
-            loadPrompts() {
-                const stored = localStorage.getItem('adminPrompts');
-                return stored ? JSON.parse(stored) : [];
-            }
-
-            savePrompts(prompts) {
-                localStorage.setItem('adminPrompts', JSON.stringify(prompts));
-                this.prompts = prompts;
+            saveToBrowser() {
+                localStorage.setItem('adminImages', JSON.stringify(this.images));
+                localStorage.setItem('adminApis', JSON.stringify(this.apis));
+                localStorage.setItem('adminPrompts', JSON.stringify(this.prompts));
+                localStorage.setItem('adminCredentials', JSON.stringify(this.credentials));
             }
 
             exportConfig() {
@@ -404,6 +433,7 @@
                     images: this.images,
                     apis: this.apis,
                     prompts: this.prompts,
+                    credentials: this.credentials,
                     exportTime: new Date().toISOString()
                 };
                 return JSON.stringify(config, null, 2);
@@ -412,9 +442,10 @@
             importConfig(configJson) {
                 try {
                     const config = JSON.parse(configJson);
-                    this.saveImages(config.images || []);
-                    this.saveApis(config.apis || []);
-                    this.savePrompts(config.prompts || []);
+                    this.images = config.images || [];
+                    this.apis = config.apis || [];
+                    this.prompts = config.prompts || [];
+                    this.credentials = config.credentials || { username: 'admin', password: 'admin' };
                     return true;
                 } catch (error) {
                     console.error('导入配置失败:', error);
@@ -439,7 +470,7 @@
         const lastUpdate = document.getElementById('lastUpdate');
 
         // === 认证功能 ===
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value.trim();
@@ -449,14 +480,11 @@
             if (username === 'admin' && password === 'admin') {
                 defaultWarning.classList.remove('hidden');
                 loginError.classList.add('hidden');
-                // 继续登录流程，但提示修改密码
-            } else if (username === 'admin' && password === 'admin') {
-                defaultWarning.classList.remove('hidden');
-                loginError.classList.add('hidden');
             }
 
             // 验证凭据
-            if (username === configManager.credentials.username && 
+            if (configManager.credentials && 
+                username === configManager.credentials.username && 
                 password === configManager.credentials.password) {
                 
                 isAuthenticated = true;
@@ -467,7 +495,7 @@
                 adminContainer.classList.remove('hidden');
                 
                 // 初始化管理界面
-                initializeAdminUI();
+                await initializeAdminUI();
                 
                 showStatus('登录成功！', 'success');
             } else {
@@ -513,7 +541,13 @@
         });
 
         // === 初始化管理界面 ===
-        function initializeAdminUI() {
+        async function initializeAdminUI() {
+            try {
+                await configManager.loadFromServer();
+            } catch (error) {
+                console.error('初始化失败:', error);
+            }
+            
             renderImageList();
             renderApiList();
             renderPromptList();
@@ -521,7 +555,7 @@
         }
 
         // === 图片管理功能 ===
-        document.getElementById('addImageBtn').addEventListener('click', function() {
+        document.getElementById('addImageBtn').addEventListener('click', async function() {
             const input = document.getElementById('newImageUrl');
             const url = input.value.trim();
             
@@ -541,13 +575,19 @@
             }
 
             configManager.images.push(url);
-            configManager.saveImages(configManager.images);
             
-            input.value = '';
-            renderImageList();
-            updateSystemInfo();
+            // 保存到服务器和浏览器
+            const serverSaveSuccess = await configManager.saveToServer();
+            configManager.saveToBrowser();
             
-            showStatus('图片添加成功', 'success');
+            if (serverSaveSuccess) {
+                input.value = '';
+                renderImageList();
+                updateSystemInfo();
+                showStatus('图片添加成功并已保存', 'success');
+            } else {
+                showStatus('图片已添加，但服务器保存失败，请检查网络', 'warning');
+            }
         });
 
         function renderImageList() {
@@ -576,12 +616,20 @@
             `).join('');
         }
 
-        function removeImage(index) {
+        async function removeImage(index) {
             configManager.images.splice(index, 1);
-            configManager.saveImages(configManager.images);
+            
+            const serverSaveSuccess = await configManager.saveToServer();
+            configManager.saveToBrowser();
+            
             renderImageList();
             updateSystemInfo();
-            showStatus('图片已移除', 'info');
+            
+            if (serverSaveSuccess) {
+                showStatus('图片已移除并保存', 'info');
+            } else {
+                showStatus('图片已移除，但服务器保存失败', 'warning');
+            }
         }
 
         // === API配置功能 ===
@@ -595,80 +643,95 @@
         }
 
         // === 提示词管理功能 ===
-        document.getElementById('addPromptBtn').addEventListener('click', function() {
+        document.getElementById('addPromptBtn').addEventListener('click', async function() {
             const name = document.getElementById('promptName').value.trim();
             const key = document.getElementById('promptKey').value.trim();
+            const content = document.getElementById('promptContent').value.trim();
             
             if (!name || !key) {
                 showStatus('请填写完整的提示词名称和键值', 'error');
                 return;
             }
 
+            // 检查键值是否已存在
             if (configManager.prompts.find(p => p.key === key)) {
                 showStatus('该提示词键值已存在，请使用其他键值', 'warning');
+                return;
+            }
+
+            // 检查名称是否已存在
+            if (configManager.prompts.find(p => p.name === name)) {
+                showStatus('该提示词名称已存在，请使用其他名称', 'warning');
                 return;
             }
 
             const newPrompt = {
                 name: name,
                 key: key,
-                prompt: '', // 实际内容需要在后端同步
-                created: new Date().toISOString()
+                prompt: content // 完整提示词内容，可以为空使用内置模板
             };
 
             configManager.prompts.push(newPrompt);
-            configManager.savePrompts(configManager.prompts);
             
+            const serverSaveSuccess = await configManager.saveToServer();
+            configManager.saveToBrowser();
+            
+            // 清空表单
             document.getElementById('promptName').value = '';
             document.getElementById('promptKey').value = '';
+            document.getElementById('promptContent').value = '';
             
             renderPromptList();
             updateSystemInfo();
             
-            showStatus('提示词添加成功', 'success');
+            if (serverSaveSuccess) {
+                showStatus('提示词添加成功并保存到服务器', 'success');
+            } else {
+                showStatus('提示词已添加，但服务器保存失败', 'warning');
+            }
         });
 
         function renderPromptList() {
             const promptList = document.getElementById('promptList');
             
-            // 显示默认提示词
-            const defaultPrompts = [
-                { name: '黑板粉笔画', key: 'blackboard', isDefault: true },
-                { name: '现实主义云彩', key: 'cloud', isDefault: true },
-                { name: '课本铅笔画', key: 'textbook', isDefault: true }
-            ];
-            
-            const allPrompts = [...defaultPrompts, ...configManager.prompts];
-            
-            promptList.innerHTML = allPrompts.map((prompt, index) => `
-                <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                    <div>
+            promptList.innerHTML = configManager.prompts.map((prompt, index) => `
+                <div class="flex items-start justify-between p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <div class="flex-1">
                         <h4 class="text-white font-medium flex items-center">
-                            ${prompt.isDefault ? '<span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>' : ''}
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
                             ${prompt.name}
                         </h4>
                         <p class="text-gray-500 text-sm">键值: ${prompt.key}</p>
-                        ${prompt.isDefault ? '<span class="text-green-400 text-xs">默认风格</span>' : '<span class="text-gray-400 text-xs">自定义风格</span>'}
+                        ${prompt.prompt ? `<p class="text-gray-400 text-xs mt-1 truncate">${prompt.prompt.substring(0, 100)}${prompt.prompt.length > 100 ? '...' : ''}</p>` : '<p class="text-gray-400 text-xs">使用内置模板</p>'}
+                        <span class="text-yellow-400 text-xs">自定义风格</span>
                     </div>
-                    ${!prompt.isDefault ? `<button onclick="removePrompt(${index - 3})" class="text-red-400 hover:text-red-300">
+                    <button onclick="removePrompt(${index})" class="text-red-400 hover:text-red-300 ml-3">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
-                    </button>` : ''}
+                    </button>
                 </div>
             `).join('');
         }
 
-        function removePrompt(index) {
+        async function removePrompt(index) {
             configManager.prompts.splice(index, 1);
-            configManager.savePrompts(configManager.prompts);
+            
+            const serverSaveSuccess = await configManager.saveToServer();
+            configManager.saveToBrowser();
+            
             renderPromptList();
             updateSystemInfo();
-            showStatus('提示词已移除', 'info');
+            
+            if (serverSaveSuccess) {
+                showStatus('提示词已移除并保存', 'info');
+            } else {
+                showStatus('提示词已移除，但服务器保存失败', 'warning');
+            }
         }
 
         // === 基础设置功能 ===
-        document.getElementById('updateCredentialsBtn').addEventListener('click', function() {
+        document.getElementById('updateCredentialsBtn').addEventListener('click', async function() {
             const newUsername = document.getElementById('newUsername').value.trim();
             const newPassword = document.getElementById('newPassword').value.trim();
             
@@ -677,7 +740,6 @@
                 return;
             }
 
-            // 验证用户名格式
             if (newUsername.length < 3) {
                 showStatus('用户名至少需要3个字符', 'error');
                 return;
@@ -688,14 +750,22 @@
                 return;
             }
 
-            configManager.saveCredentials({ username: newUsername, password: newPassword });
+            configManager.credentials = { username: newUsername, password: newPassword };
             
-            document.getElementById('newUsername').value = '';
-            document.getElementById('newPassword').value = '';
+            const serverSaveSuccess = await configManager.saveToServer();
+            configManager.saveToBrowser();
             
             currentUser.textContent = `${newUsername}@admin`;
             
-            showStatus('登录凭证更新成功！下次登录请使用新凭据', 'success');
+            // 清空表单
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            
+            if (serverSaveSuccess) {
+                showStatus('登录凭证更新成功！下次登录请使用新凭据', 'success');
+            } else {
+                showStatus('凭证已更新，但服务器保存失败，请检查网络', 'warning');
+            }
         });
 
         // === 配置备份功能 ===
@@ -717,20 +787,28 @@
             document.getElementById('configFileInput').click();
         });
 
-        document.getElementById('configFileInput').addEventListener('change', function(e) {
+        document.getElementById('configFileInput').addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = async function(event) {
                 const configJson = event.target.result;
                 
                 if (configManager.importConfig(configJson)) {
+                    const serverSaveSuccess = await configManager.saveToServer();
+                    configManager.saveToBrowser();
+                    
                     renderImageList();
                     renderApiList();
                     renderPromptList();
                     updateSystemInfo();
-                    showStatus('配置导入成功', 'success');
+                    
+                    if (serverSaveSuccess) {
+                        showStatus('配置导入成功并保存到服务器', 'success');
+                    } else {
+                        showStatus('配置导入成功，但服务器保存失败', 'warning');
+                    }
                 } else {
                     showStatus('配置导入失败，请检查文件格式', 'error');
                 }
@@ -786,13 +864,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 设置默认用户名提示
             document.getElementById('username').placeholder = '默认: admin';
-            
-            // 如果有已保存的凭证，显示提示
-            if (configManager.credentials.username !== 'admin' || configManager.credentials.password !== 'admin') {
-                const usernameInput = document.getElementById('username');
-                const username = configManager.credentials.username;
-                usernameInput.placeholder = `已配置: ${username}`;
-            }
+            document.getElementById('password').placeholder = '默认: admin';
         });
 
         // === 键盘快捷键支持 ===
