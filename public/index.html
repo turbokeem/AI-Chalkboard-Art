@@ -54,7 +54,7 @@
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
-        /* 走马灯动画 - 调整每张图片显示时间改为25秒 */
+        /* 走马灯动画 - 调整每张图片显示时间改为18秒 */
         .carousel-container {
             position: relative;
             width: 100%;
@@ -66,7 +66,7 @@
         .carousel-image {
             position: absolute;
             opacity: 0;
-            animation: carousel-fade 25s infinite;
+            animation: carousel-fade 18s infinite;
             border-radius: 1rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(55, 65, 81, 0.5);
@@ -75,40 +75,40 @@
             object-fit: contain;
         }
         .carousel-image:nth-child(1) { animation-delay: 0s; }
-        .carousel-image:nth-child(2) { animation-delay: 8.33s; }
-        .carousel-image:nth-child(3) { animation-delay: 16.67s; }
-        .carousel-image:nth-child(4) { animation-delay: 25s; }
-        .carousel-image:nth-child(5) { animation-delay: 33.33s; }
-        .carousel-image:nth-child(6) { animation-delay: 41.67s; }
-        .carousel-image:nth-child(7) { animation-delay: 50s; }
-        .carousel-image:nth-child(8) { animation-delay: 58.33s; }
-        .carousel-image:nth-child(9) { animation-delay: 66.67s; }
-        .carousel-image:nth-child(10) { animation-delay: 75s; }
-        .carousel-image:nth-child(11) { animation-delay: 83.33s; }
-        .carousel-image:nth-child(12) { animation-delay: 91.67s; }
-        .carousel-image:nth-child(13) { animation-delay: 100s; }
-        .carousel-image:nth-child(14) { animation-delay: 108.33s; }
-        .carousel-image:nth-child(15) { animation-delay: 116.67s; }
-        .carousel-image:nth-child(16) { animation-delay: 125s; }
-        .carousel-image:nth-child(17) { animation-delay: 133.33s; }
-        .carousel-image:nth-child(18) { animation-delay: 141.67s; }
-        .carousel-image:nth-child(19) { animation-delay: 150s; }
-        .carousel-image:nth-child(20) { animation-delay: 158.33s; }
-        .carousel-image:nth-child(21) { animation-delay: 166.67s; }
-        .carousel-image:nth-child(22) { animation-delay: 175s; }
-        .carousel-image:nth-child(23) { animation-delay: 183.33s; }
-        .carousel-image:nth-child(24) { animation-delay: 191.67s; }
-        .carousel-image:nth-child(25) { animation-delay: 200s; }
-        .carousel-image:nth-child(26) { animation-delay: 208.33s; }
-        .carousel-image:nth-child(27) { animation-delay: 216.67s; }
-        .carousel-image:nth-child(28) { animation-delay: 225s; }
-        .carousel-image:nth-child(29) { animation-delay: 233.33s; }
-        .carousel-image:nth-child(30) { animation-delay: 241.67s; }
+        .carousel-image:nth-child(2) { animation-delay: 0.6s; }
+        .carousel-image:nth-child(3) { animation-delay: 1.2s; }
+        .carousel-image:nth-child(4) { animation-delay: 1.8s; }
+        .carousel-image:nth-child(5) { animation-delay: 2.4s; }
+        .carousel-image:nth-child(6) { animation-delay: 3s; }
+        .carousel-image:nth-child(7) { animation-delay: 3.6s; }
+        .carousel-image:nth-child(8) { animation-delay: 4.2s; }
+        .carousel-image:nth-child(9) { animation-delay: 4.8s; }
+        .carousel-image:nth-child(10) { animation-delay: 5.4s; }
+        .carousel-image:nth-child(11) { animation-delay: 6s; }
+        .carousel-image:nth-child(12) { animation-delay: 6.6s; }
+        .carousel-image:nth-child(13) { animation-delay: 7.2s; }
+        .carousel-image:nth-child(14) { animation-delay: 7.8s; }
+        .carousel-image:nth-child(15) { animation-delay: 8.4s; }
+        .carousel-image:nth-child(16) { animation-delay: 9s; }
+        .carousel-image:nth-child(17) { animation-delay: 9.6s; }
+        .carousel-image:nth-child(18) { animation-delay: 10.2s; }
+        .carousel-image:nth-child(19) { animation-delay: 10.8s; }
+        .carousel-image:nth-child(20) { animation-delay: 11.4s; }
+        .carousel-image:nth-child(21) { animation-delay: 12s; }
+        .carousel-image:nth-child(22) { animation-delay: 12.6s; }
+        .carousel-image:nth-child(23) { animation-delay: 13.2s; }
+        .carousel-image:nth-child(24) { animation-delay: 13.8s; }
+        .carousel-image:nth-child(25) { animation-delay: 14.4s; }
+        .carousel-image:nth-child(26) { animation-delay: 15s; }
+        .carousel-image:nth-child(27) { animation-delay: 15.6s; }
+        .carousel-image:nth-child(28) { animation-delay: 16.2s; }
+        .carousel-image:nth-child(29) { animation-delay: 16.8s; }
+        .carousel-image:nth-child(30) { animation-delay: 17.4s; }
         
         @keyframes carousel-fade {
             0%, 3.33% { opacity: 0; transform: scale(0.8); }
-            5%, 10% { opacity: 1; transform: scale(1); }
-            11.67%, 100% { opacity: 0; transform: scale(0.8); }
+            9%, 14% { opacity: 1; transform: scale(1); }
+            14.67%, 100% { opacity: 0; transform: scale(0.8); }
         }
         /* 下载按钮动画 */
         .download-btn {
