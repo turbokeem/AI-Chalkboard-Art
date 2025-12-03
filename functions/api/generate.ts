@@ -179,7 +179,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         debug: {
           hasGeminiKey: hasGeminiKey,
           configuredApis: adminConfig?.api_configs?.length || 0,
-          promptLength: prompt.length
+          apiKeyLength: env.GEMINI_API_KEY?.length || 0,
+          promptLength: prompt.length,
+          suggestion: '请在Cloudflare Pages后台添加环境变量GEMINI_API_KEY，或在管理后台配置有效API密钥'
         }
       }), { status: 500 });
     }
