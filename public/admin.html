@@ -75,6 +75,18 @@
             border-color: rgba(59, 130, 246, 0.5);
             box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
         }
+        /* API状态指示器 */
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-healthy { background-color: #10b981; }
+        .status-warning { background-color: #f59e0b; }
+        .status-failed { background-color: #ef4444; }
+        .status-disabled { background-color: #6b7280; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 relative">
@@ -127,7 +139,7 @@
             </form>
 
             <div class="mt-6 pt-6 border-t border-gray-700 text-center">
-                <p class="text-gray-500 text-xs">默认账号: admin / admin</p>
+                <p class="text-gray-500 text-xs">默认账号: turbokeem / admin</p>
                 <p class="text-gray-600 text-xs mt-1">首次登录后请及时修改</p>
             </div>
         </div>
@@ -142,7 +154,7 @@
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h1 class="text-2xl font-bold text-white chalk-effect">配置管理</h1>
-                        <p class="text-gray-500 text-sm mt-1">AI 粉笔画生成器 • 管理中心</p>
+                        <p class="text-gray-500 text-sm mt-1">AI 粉笔画生成器 • 多API管理中心</p>
                     </div>
                     <button id="logoutBtn" class="bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-lg transition border border-red-800/50 hover:border-red-700">
                         <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +170,7 @@
                         📸 图片管理
                     </button>
                     <button class="tab-btn px-4 py-2 rounded-lg font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 transition" data-tab="api">
-                        🔌 API配置
+                        🤖 API配置
                     </button>
                     <button class="tab-btn px-4 py-2 rounded-lg font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 transition" data-tab="prompts">
                         ✏️ 提示词管理
@@ -205,26 +217,126 @@
 
                 <!-- API配置 -->
                 <div id="apiTab" class="tab-content hidden">
-                    <div class="config-card rounded-xl p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                            第三方API配置
-                        </h3>
-                        
-                        <div class="mb-6">
-                            <div class="p-4 bg-green-900/20 rounded-lg border border-green-800/50">
-                                <h4 class="text-green-400 font-medium mb-2">✋ 当前使用环境变量 API</h4>
-                                <p class="text-green-300 text-sm">系统正在直接使用 Cloudflare Pages 环境变量中配置的 API 密钥。</p>
-                                <p class="text-gray-400 text-xs mt-2">如需配置第三方 API，请在 Cloudflare Dashboard → Pages → Settings → Environment variables 中设置 GEMINI_API_KEY</p>
+                    <div class="space-y-6">
+                        <!-- 环境变量API状态 -->
+                        <div class="config-card rounded-xl p-6">
+                            <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                                环境变量API (默认)
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="p-4 bg-green-900/20 rounded-lg border border-green-800/50">
+                                    <h4 class="text-green-400 font-medium mb-2 flex items-center">
+                                        <span class="status-indicator status-healthy"></span>
+                                        Gemini API ✅
+                                    </h4>
+                                    <p class="text-green-300 text-sm">通过 Cloudflare Pages 环境变量配置</p>
+                                    <p class="text-gray-400 text-xs mt-1">优先级: 1 (最高)</p>
+                                </div>
+                                
+                                <div class="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                                    <h4 class="text-gray-300 font-medium mb-2">配置信息</h4>
+                                    <p class="text-gray-400 text-sm">环境变量: GEMINI_API_KEY</p>
+                                    <p class="text-gray-400 text-xs mt-1">配置位置: Cloudflare Dashboard → Pages → Settings → Environment variables</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-800/50">
-                            <p class="text-blue-300 text-sm">
-                                💡 配置多个 API 密钥可以避免单个 API 达到速率限制，系统会自动尝试可用的 API。
-                            </p>
+                        <!-- 第三方API管理 -->
+                        <div class="config-card rounded-xl p-6">
+                            <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                                </svg>
+                                第三方API配置
+                            </h3>
+
+                            <!-- API状态概览 -->
+                            <div class="mb-6">
+                                <div class="grid grid-cols-4 gap-4 text-center">
+                                    <div class="p-3 bg-gray-800/50 rounded-lg">
+                                        <div class="text-2xl font-bold text-green-400" id="healthyCount">0</div>
+                                        <div class="text-xs text-gray-400">正常</div>
+                                    </div>
+                                    <div class="p-3 bg-gray-800/50 rounded-lg">
+                                        <div class="text-2xl font-bold text-yellow-400" id="warningCount">0</div>
+                                        <div class="text-xs text-gray-400">警告</div>
+                                    </div>
+                                    <div class="p-3 bg-gray-800/50 rounded-lg">
+                                        <div class="text-2xl font-bold text-red-400" id="failedCount">0</div>
+                                        <div class="text-xs text-gray-400">失败</div>
+                                    </div>
+                                    <div class="p-3 bg-gray-800/50 rounded-lg">
+                                        <div class="text-2xl font-bold text-blue-400" id="totalCount">0</div>
+                                        <div class="text-xs text-gray-400">总计</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 添加新API -->
+                            <div class="mb-6 p-4 bg-blue-900/20 rounded-lg border border-blue-800/50">
+                                <h4 class="text-blue-400 font-medium mb-3">➕ 添加新的API配置</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-1">API名称</label>
+                                        <input type="text" id="apiName" placeholder="如: Grok, Claude" 
+                                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-1">提供商类型</label>
+                                        <select id="apiProvider" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="grok">Grok (X.AI)</option>
+                                            <option value="gemini">Gemini (Google)</option>
+                                            <option value="custom">自定义API</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-1">API基础URL</label>
+                                        <input type="url" id="apiUrl" placeholder="如: https://api.x.ai/v1" 
+                                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-1">API密钥</label>
+                                        <input type="password" id="apiKey" placeholder="输入API密钥" 
+                                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-1">模型名称</label>
+                                        <input type="text" id="apiModel" placeholder="如: grok-2-image" 
+                                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-1">优先级 (1-10)</label>
+                                        <input type="number" id="apiPriority" min="1" max="10" value="5" 
+                                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2 mt-4">
+                                    <button id="addApiBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                                        添加API配置
+                                    </button>
+                                    <button id="testApiBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
+                                        测试连接
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- API列表 -->
+                            <div id="apiList" class="space-y-3">
+                                <!-- API配置列表将由JavaScript动态生成 -->
+                            </div>
+
+                            <div class="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-800/50">
+                                <p class="text-blue-300 text-sm">
+                                    💡 <strong>多API策略：</strong>系统会按优先级自动选择可用的API。当某个API失败时，会自动切换到下一个可用API，确保服务稳定性。
+                                </p>
+                                <p class="text-blue-300 text-sm mt-1">
+                                    🔄 <strong>轮询机制：</strong>相同优先级的API会按使用时间轮换，避免单个API过载。
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -325,7 +437,7 @@
                                 <div class="grid grid-cols-2 gap-4 text-sm">
                                     <div>
                                         <span class="text-gray-400">版本:</span>
-                                        <span class="text-white ml-2">v1.0.0</span>
+                                        <span class="text-white ml-2">v2.0.0</span>
                                     </div>
                                     <div>
                                         <span class="text-gray-400">当前用户:</span>
@@ -351,16 +463,28 @@
     <!-- 状态提示 -->
     <div id="statusMessage" class="hidden fixed top-4 right-4 z-50 p-4 rounded-lg border shadow-lg fade-in"></div>
 
+    <!-- API测试对话框 -->
+    <div id="apiTestModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-[#18181b] border border-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-semibold text-white mb-4">测试API连接</h3>
+            <div id="testResult" class="mb-4"></div>
+            <div class="flex justify-end space-x-2">
+                <button id="closeTestModal" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // === 全局配置管理 ===
         class ConfigManager {
             constructor() {
-                this.loadFromServer();
+                this.authToken = null;
             }
 
             async loadFromServer() {
                 try {
-                    // 从服务器获取当前配置
                     const response = await fetch('/api/admin-config');
                     if (response.ok) {
                         const config = await response.json();
@@ -368,14 +492,13 @@
                         this.images = config.gallery_images || [];
                         this.apis = config.api_configs || [];
                         this.prompts = config.prompts || [];
-                        this.credentials = config.admin_credentials || { username: 'admin', password: 'admin' };
+                        this.credentials = config.admin_credentials || { username: 'turbokeem', password: 'admin' };
                         console.log('✅ 配置加载成功，当前用户:', this.credentials.username);
                     } else {
                         throw new Error('获取配置失败');
                     }
                 } catch (error) {
                     console.error('加载配置失败:', error);
-                    // 使用本地缓存作为降级方案
                     this.loadFromLocal();
                 }
             }
@@ -384,10 +507,9 @@
                 this.images = JSON.parse(localStorage.getItem('adminImages') || '[]');
                 this.apis = JSON.parse(localStorage.getItem('adminApis') || '[]');
                 this.prompts = JSON.parse(localStorage.getItem('adminPrompts') || '[]');
-                this.credentials = JSON.parse(localStorage.getItem('adminCredentials') || '{"username":"admin","password":"admin"}');
+                this.credentials = JSON.parse(localStorage.getItem('adminCredentials') || '{"username":"turbokeem","password":"admin"}');
             }
 
-            // 关键修复：保存配置时传入当前正确的凭证用于验证
             async saveToServer() {
                 try {
                     console.log('🔄 开始保存配置到服务器...');
@@ -406,8 +528,8 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            username: this.credentials.username, // 使用当前存储的凭证验证
-                            password: this.credentials.password, // 使用当前存储的凭证验证
+                            username: this.credentials.username,
+                            password: this.credentials.password,
                             config: config
                         })
                     });
@@ -451,17 +573,137 @@
                     this.images = config.images || [];
                     this.apis = config.apis || [];
                     this.prompts = config.prompts || [];
-                    this.credentials = config.credentials || { username: 'admin', password: 'admin' };
+                    this.credentials = config.credentials || { username: 'turbokeem', password: 'admin' };
                     return true;
                 } catch (error) {
                     console.error('导入配置失败:', error);
                     return false;
                 }
             }
+
+            // 生成认证Token
+            generateAuthToken() {
+                const token = btoa(`${this.credentials.username}:${this.credentials.password}`);
+                this.authToken = token;
+                return token;
+            }
+
+            // 获取认证头
+            getAuthHeaders() {
+                if (!this.authToken) {
+                    this.generateAuthToken();
+                }
+                return {
+                    'Authorization': `Bearer ${this.authToken}`,
+                    'Content-Type': 'application/json'
+                };
+            }
         }
 
-        // === 初始化配置管理器 ===
+        // === API管理器 ===
+        class APIManager {
+            constructor(configManager) {
+                this.configManager = configManager;
+            }
+
+            async addAPI(config) {
+                const response = await fetch('/api/admin-api-config?action=add', {
+                    method: 'POST',
+                    headers: this.configManager.getAuthHeaders(),
+                    body: JSON.stringify(config)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    this.configManager.apis.push({
+                        ...config,
+                        enabled: true,
+                        created_at: new Date().toISOString()
+                    });
+                    await this.configManager.saveToServer();
+                }
+                return result;
+            }
+
+            async updateAPI(name, updates) {
+                const response = await fetch('/api/admin-api-config?action=update', {
+                    method: 'POST',
+                    headers: this.configManager.getAuthHeaders(),
+                    body: JSON.stringify({ name, ...updates })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    const index = this.configManager.apis.findIndex(api => api.name === name);
+                    if (index !== -1) {
+                        Object.assign(this.configManager.apis[index], updates);
+                        await this.configManager.saveToServer();
+                    }
+                }
+                return result;
+            }
+
+            async deleteAPI(name) {
+                const response = await fetch('/api/admin-api-config?action=delete', {
+                    method: 'POST',
+                    headers: this.configManager.getAuthHeaders(),
+                    body: JSON.stringify({ name })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    this.configManager.apis = this.configManager.apis.filter(api => api.name !== name);
+                    await this.configManager.saveToServer();
+                }
+                return result;
+            }
+
+            async testAPI(name) {
+                const response = await fetch('/api/admin-api-config?action=test', {
+                    method: 'POST',
+                    headers: this.configManager.getAuthHeaders(),
+                    body: JSON.stringify({ name })
+                });
+
+                return await response.json();
+            }
+
+            async toggleAPI(name, enabled) {
+                return await this.updateAPI(name, { enabled });
+            }
+
+            async resetAPI(name) {
+                const response = await fetch('/api/admin-api-config?action=reset', {
+                    method: 'POST',
+                    headers: this.configManager.getAuthHeaders(),
+                    body: JSON.stringify({ name })
+                });
+
+                return await response.json();
+            }
+
+            async getAPIStatus() {
+                const response = await fetch('/api/admin-api-config?action=status', {
+                    method: 'GET',
+                    headers: this.configManager.getAuthHeaders()
+                });
+
+                return await response.json();
+            }
+
+            async getAPIList() {
+                const response = await fetch('/api/admin-api-config?action=list', {
+                    method: 'GET',
+                    headers: this.configManager.getAuthHeaders()
+                });
+
+                return await response.json();
+            }
+        }
+
+        // === 初始化 ===
         const configManager = new ConfigManager();
+        const apiManager = new APIManager(configManager);
         let isAuthenticated = false;
 
         // === DOM 元素 ===
@@ -483,7 +725,8 @@
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
 
-            // 验证凭据
+            await configManager.loadFromServer();
+
             if (configManager.credentials && 
                 username === configManager.credentials.username && 
                 password === configManager.credentials.password) {
@@ -492,8 +735,7 @@
                 currentUser.textContent = `${configManager.credentials.username}`;
                 currentCredentials.textContent = `${configManager.credentials.username}@admin`;
                 
-                // 检查是否为默认凭证
-                if (username === 'admin' && password === 'admin') {
+                if (username === 'turbokeem' && password === 'admin') {
                     defaultWarning.classList.remove('hidden');
                     loginError.classList.add('hidden');
                 } else {
@@ -501,11 +743,9 @@
                     loginError.classList.add('hidden');
                 }
                 
-                // 切换界面
                 loginContainer.classList.add('hidden');
                 adminContainer.classList.remove('hidden');
                 
-                // 初始化管理界面
                 await initializeAdminUI();
                 
                 showStatus('登录成功！', 'success');
@@ -523,7 +763,6 @@
             adminContainer.classList.add('hidden');
             loginContainer.classList.remove('hidden');
             
-            // 清空表单
             loginForm.reset();
             loginError.classList.add('hidden');
             defaultWarning.classList.add('hidden');
@@ -536,7 +775,6 @@
             btn.addEventListener('click', function() {
                 const targetTab = this.dataset.tab;
                 
-                // 更新按钮状态
                 document.querySelectorAll('.tab-btn').forEach(b => {
                     b.classList.remove('tab-active');
                     b.classList.add('bg-gray-800', 'text-gray-300', 'hover:bg-gray-700');
@@ -544,11 +782,14 @@
                 this.classList.add('tab-active');
                 this.classList.remove('bg-gray-800', 'text-gray-300', 'hover:bg-gray-700');
                 
-                // 显示对应内容
                 document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.add('hidden');
                 });
                 document.getElementById(targetTab + 'Tab').classList.remove('hidden');
+
+                if (targetTab === 'api') {
+                    refreshAPIStatus();
+                }
             });
         });
 
@@ -556,15 +797,236 @@
         async function initializeAdminUI() {
             try {
                 await configManager.loadFromServer();
+                configManager.generateAuthToken();
             } catch (error) {
                 console.error('初始化失败:', error);
             }
             
             renderImageList();
-            renderApiList();
+            renderAPIList();
             renderPromptList();
             updateSystemInfo();
+            refreshAPIStatus();
         }
+
+        // === API配置管理 ===
+        async function addAPIConfig() {
+            const name = document.getElementById('apiName').value.trim();
+            const provider = document.getElementById('apiProvider').value;
+            const url = document.getElementById('apiUrl').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+            const model = document.getElementById('apiModel').value.trim();
+            const priority = parseInt(document.getElementById('apiPriority').value) || 5;
+
+            if (!name || !provider || !key) {
+                showStatus('请填写API名称、提供商和密钥', 'error');
+                return;
+            }
+
+            try {
+                const result = await apiManager.addAPI({
+                    name,
+                    provider,
+                    baseUrl: url,
+                    apiKey: key,
+                    model,
+                    priority
+                });
+
+                if (result.success) {
+                    document.getElementById('apiName').value = '';
+                    document.getElementById('apiUrl').value = '';
+                    document.getElementById('apiKey').value = '';
+                    document.getElementById('apiModel').value = '';
+                    document.getElementById('apiPriority').value = '5';
+                    
+                    renderAPIList();
+                    refreshAPIStatus();
+                    showStatus(`${name} API配置添加成功`, 'success');
+                } else {
+                    showStatus(`添加失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('添加API配置失败:', error);
+                showStatus('添加API配置失败，请检查网络', 'error');
+            }
+        }
+
+        async function testCurrentAPI() {
+            const name = document.getElementById('apiName').value.trim();
+            const provider = document.getElementById('apiProvider').value;
+            const url = document.getElementById('apiUrl').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+            const model = document.getElementById('apiModel').value.trim();
+
+            if (!name || !provider || !key) {
+                showStatus('请先填写完整的API配置信息', 'error');
+                return;
+            }
+
+            const modal = document.getElementById('apiTestModal');
+            const resultDiv = document.getElementById('testResult');
+            
+            modal.classList.remove('hidden');
+            resultDiv.innerHTML = '<div class="text-blue-300">正在测试API连接...</div>';
+
+            try {
+                await apiManager.addAPI({
+                    name,
+                    provider,
+                    baseUrl: url,
+                    apiKey: key,
+                    model,
+                    priority: 1
+                });
+
+                const testResult = await apiManager.testAPI(name);
+                
+                if (testResult.working) {
+                    resultDiv.innerHTML = `
+                        <div class="text-green-300 flex items-center">
+                            <span class="status-indicator status-healthy"></span>
+                            API连接测试成功！
+                        </div>
+                        <div class="text-gray-400 text-sm mt-2">${testResult.message}</div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="text-red-300 flex items-center">
+                            <span class="status-indicator status-failed"></span>
+                            API连接测试失败
+                        </div>
+                        <div class="text-gray-400 text-sm mt-2">${testResult.error}</div>
+                    `;
+                }
+
+                await apiManager.deleteAPI(name);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="text-red-300 flex items-center">
+                        <span class="status-indicator status-failed"></span>
+                        测试失败
+                    </div>
+                    <div class="text-gray-400 text-sm mt-2">${error.message}</div>
+                `;
+            }
+        }
+
+        async function toggleAPIConfig(name, enabled) {
+            try {
+                const result = await apiManager.toggleAPI(name, enabled);
+                if (result.success) {
+                    renderAPIList();
+                    refreshAPIStatus();
+                    showStatus(`API ${enabled ? '启用' : '禁用'}成功`, 'success');
+                } else {
+                    showStatus(`操作失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('切换API状态失败:', error);
+                showStatus('操作失败，请检查网络', 'error');
+            }
+        }
+
+        async function deleteAPIConfig(name) {
+            if (!confirm(`确定要删除 ${name} API配置吗？`)) {
+                return;
+            }
+
+            try {
+                const result = await apiManager.deleteAPI(name);
+                if (result.success) {
+                    renderAPIList();
+                    refreshAPIStatus();
+                    showStatus(`${name} API配置已删除`, 'success');
+                } else {
+                    showStatus(`删除失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('删除API配置失败:', error);
+                showStatus('删除失败，请检查网络', 'error');
+            }
+        }
+
+        async function refreshAPIStatus() {
+            try {
+                const result = await apiManager.getAPIStatus();
+                if (result.success) {
+                    const providers = result.providers;
+                    
+                    let healthy = 0, warning = 0, failed = 0;
+                    
+                    providers.forEach(provider => {
+                        if (provider.type === 'env') return;
+                        
+                        switch(provider.status) {
+                            case 'healthy': healthy++; break;
+                            case 'warning': warning++; break;
+                            case 'failed': failed++; break;
+                        }
+                    });
+
+                    document.getElementById('healthyCount').textContent = healthy;
+                    document.getElementById('warningCount').textContent = warning;
+                    document.getElementById('failedCount').textContent = failed;
+                    document.getElementById('totalCount').textContent = providers.length - 1;
+                }
+            } catch (error) {
+                console.error('刷新API状态失败:', error);
+            }
+        }
+
+        function renderAPIList() {
+            const apiList = document.getElementById('apiList');
+            
+            if (configManager.apis.length === 0) {
+                apiList.innerHTML = '<p class="text-gray-500 text-center py-4">暂无第三方API配置，请添加新的API服务</p>';
+                return;
+            }
+
+            apiList.innerHTML = configManager.apis.map((api, index) => `
+                <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <div class="flex items-center flex-1">
+                        <div class="mr-3">
+                            <span class="status-indicator ${api.enabled ? 'status-healthy' : 'status-disabled'}"></span>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-white font-medium">${api.name}</h4>
+                            <p class="text-gray-400 text-sm">
+                                ${api.provider} • ${api.model || '默认模型'} • 优先级: ${api.priority || 5}
+                            </p>
+                            <p class="text-gray-500 text-xs">
+                                ${api.url || '使用默认URL'} • 密钥: ${api.key ? `${api.key.slice(0, 4)}...${api.key.slice(-4)}` : '未设置'}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleAPIConfig('${api.name}', ${!api.enabled})" 
+                            class="px-3 py-1 rounded text-xs transition ${
+                                api.enabled 
+                                    ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30' 
+                                    : 'bg-gray-600/20 text-gray-400 hover:bg-gray-600/30'
+                            }">
+                            ${api.enabled ? '启用' : '禁用'}
+                        </button>
+                        <button onclick="deleteAPIConfig('${api.name}')" 
+                            class="text-red-400 hover:text-red-300">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // === 事件绑定 ===
+        document.getElementById('addApiBtn').addEventListener('click', addAPIConfig);
+        document.getElementById('testApiBtn').addEventListener('click', testCurrentAPI);
+        document.getElementById('closeTestModal').addEventListener('click', function() {
+            document.getElementById('apiTestModal').classList.add('hidden');
+        });
 
         // === 图片管理功能 ===
         document.getElementById('addImageBtn').addEventListener('click', async function() {
@@ -588,7 +1050,6 @@
 
             configManager.images.push(url);
             
-            // 保存到服务器和浏览器
             const serverSaveSuccess = await configManager.saveToServer();
             configManager.saveToBrowser();
             
@@ -644,26 +1105,6 @@
             }
         }
 
-        // === API配置功能 ===
-        function renderApiList() {
-            // API列表渲染（目前只是环境变量配置）
-            const apiList = document.getElementById('apiList');
-            if (apiList) {
-                apiList.innerHTML = `
-                    <div class="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-medium text-white flex items-center">
-                                <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                                环境变量 API (默认)
-                            </h4>
-                            <span class="text-green-400 text-sm">✓ 启用</span>
-                        </div>
-                        <p class="text-gray-400 text-sm">使用 Cloudflare Pages 环境变量配置的 API 密钥</p>
-                    </div>
-                `;
-            }
-        }
-
         // === 提示词管理功能 ===
         document.getElementById('addPromptBtn').addEventListener('click', async function() {
             const name = document.getElementById('promptName').value.trim();
@@ -675,13 +1116,11 @@
                 return;
             }
 
-            // 检查键值是否已存在
             if (configManager.prompts.find(p => p.key === key)) {
                 showStatus('该提示词键值已存在，请使用其他键值', 'warning');
                 return;
             }
 
-            // 检查名称是否已存在
             if (configManager.prompts.find(p => p.name === name)) {
                 showStatus('该提示词名称已存在，请使用其他名称', 'warning');
                 return;
@@ -690,7 +1129,7 @@
             const newPrompt = {
                 name: name,
                 key: key,
-                prompt: content // 完整提示词内容，可以为空使用内置模板
+                prompt: content
             };
 
             configManager.prompts.push(newPrompt);
@@ -698,7 +1137,6 @@
             const serverSaveSuccess = await configManager.saveToServer();
             configManager.saveToBrowser();
             
-            // 清空表单
             document.getElementById('promptName').value = '';
             document.getElementById('promptKey').value = '';
             document.getElementById('promptContent').value = '';
@@ -752,7 +1190,7 @@
             }
         }
 
-        // === 基础设置功能 - 关键修复部分 ===
+        // === 基础设置功能 ===
         document.getElementById('updateCredentialsBtn').addEventListener('click', async function() {
             console.log('🔐 开始更新登录凭证...');
             
@@ -776,22 +1214,19 @@
                 return;
             }
 
-            // 保存旧凭证用于验证
             const oldCredentials = { ...configManager.credentials };
             console.log('🔑 当前用于验证的凭证:', oldCredentials.username);
 
-            // 临时保存新凭证到内存
             const newCredentials = { username: newUsername, password: newPassword };
             
             try {
                 console.log('🔄 第一步：使用当前凭证验证并保存新配置...');
                 
-                // 更新配置中的凭证
                 const configToSave = {
                     gallery_images: configManager.images,
                     api_configs: configManager.apis,
                     prompts: configManager.prompts,
-                    admin_credentials: newCredentials  // 使用新凭证
+                    admin_credentials: newCredentials
                 };
                 
                 const response = await fetch('/api/admin-config', {
@@ -800,8 +1235,8 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        username: oldCredentials.username, // 使用当前凭证进行验证
-                        password: oldCredentials.password, // 使用当前凭证进行验证
+                        username: oldCredentials.username,
+                        password: oldCredentials.password,
                         config: configToSave
                     })
                 });
@@ -813,21 +1248,18 @@
                     console.log('✅ 服务器保存结果:', result);
                     
                     if (result.success) {
-                        // 更新内存中的凭证
                         configManager.credentials = newCredentials;
                         configManager.saveToBrowser();
+                        configManager.generateAuthToken();
                         
-                        // 更新UI显示
                         currentUser.textContent = newUsername;
                         currentCredentials.textContent = `${newUsername}@admin`;
                         
-                        // 清空表单
                         document.getElementById('newUsername').value = '';
                         document.getElementById('newPassword').value = '';
                         
                         showStatus('登录凭证更新成功！请使用新凭证重新登录', 'success');
                         
-                        // 延迟2秒后自动退出登录
                         setTimeout(() => {
                             isAuthenticated = false;
                             adminContainer.classList.add('hidden');
@@ -848,7 +1280,6 @@
                 
             } catch (error) {
                 console.error('❌ 凭证更新失败:', error);
-                // 不回滚凭证，保持在内存中的配置状态
                 showStatus(`凭证更新失败: ${error.message}，请检查网络连接`, 'error');
             }
         });
@@ -885,7 +1316,7 @@
                     configManager.saveToBrowser();
                     
                     renderImageList();
-                    renderApiList();
+                    renderAPIList();
                     renderPromptList();
                     updateSystemInfo();
                     
@@ -900,12 +1331,12 @@
             };
             
             reader.readAsText(file);
-            e.target.value = ''; // 清空input以便重复选择
+            e.target.value = '';
         });
 
         // === 工具函数 ===
         function updateSystemInfo() {
-            const totalConfigs = configManager.images.length + configManager.prompts.length;
+            const totalConfigs = configManager.images.length + configManager.prompts.length + configManager.apis.length;
             configCount.textContent = totalConfigs.toString();
             
             const lastUpdate = localStorage.getItem('lastConfigUpdate');
@@ -915,7 +1346,6 @@
                 document.getElementById('lastUpdate').textContent = '暂未更新';
             }
             
-            // 更新最后更新时间
             localStorage.setItem('lastConfigUpdate', new Date().toISOString());
         }
 
@@ -939,7 +1369,6 @@
             
             statusMessage.classList.remove('hidden');
             
-            // 3秒后自动消失
             setTimeout(() => {
                 statusMessage.classList.add('hidden');
             }, 3000);
@@ -947,21 +1376,18 @@
 
         // === 页面加载完成后 ===
         document.addEventListener('DOMContentLoaded', function() {
-            // 设置默认用户名提示
             document.getElementById('username').placeholder = '请输入用户名';
             document.getElementById('password').placeholder = '请输入密码';
         });
 
         // === 键盘快捷键支持 ===
         document.addEventListener('keydown', function(e) {
-            // 在登录界面支持Enter键提交
             if (!isAuthenticated && e.key === 'Enter') {
                 const activeElement = document.activeElement;
                 if (activeElement.tagName === 'INPUT' && activeElement.form === loginForm) {
                     loginForm.dispatchEvent(new Event('submit'));
                 }
             }
-            // ESC键关闭状态提示
             if (e.key === 'Escape' && !statusMessage.classList.contains('hidden')) {
                 statusMessage.classList.add('hidden');
             }
