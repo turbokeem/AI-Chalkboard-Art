@@ -25,7 +25,7 @@ export class GrokAPI {
       console.log(`[GrokAPI] Generating image with prompt length: ${prompt.length}`);
       
       // 构造图片生成提示 - 让模型生成图片
-      const imagePrompt = `Please generate an image: ${prompt}. Return the image directly without additional text.`;
+      const imagePrompt = `Please generate an image: ${prompt}`;
       
       // 使用 OpenAI 兼容的 Chat Completions API
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -152,9 +152,52 @@ export class GrokAPI {
    */
   async testConnection(): Promise<boolean> {
     try {
-      console.log(`[GrokAPI] Testing connection to ${this.baseUrl}/models`);
+      console.log(`[GrokAPI] Testing connection to ${this.baseUrl}/chat/completions`);
       
-      // 使用标准的OpenAI兼容API测试端点
+      // 使用chat/completions端点测试（更直接）
+      const testResponse = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [
+            {
+              role: 'user',
+              content: 'Hello, this is a test message. Please respond with "API working" only.'
+            }
+          ],
+          max_tokens: 10,
+          temperature: 0.1
+        })
+      });
+
+      if (testResponse.ok) {
+        const data = await testResponse.json();
+        console.log(`[GrokAPI] Connection test successful, response:`, JSON.stringify(data, null, 2));
+        return true;
+      } else {
+        const errorText = await testResponse.text();
+        console.error(`[GrokAPI] Connection test failed: ${testResponse.status}`, errorText);
+        
+        // 如果chat/completions失败，再尝试models端点
+        return await this.testModelsEndpoint();
+      }
+    } catch (error) {
+      console.error(`[GrokAPI] Connection test error:`, error);
+      return false;
+    }
+  }
+  
+  /**
+   * 测试models端点（备用测试方法）
+   */
+  private async testModelsEndpoint(): Promise<boolean> {
+    try {
+      console.log(`[GrokAPI] Trying models endpoint as fallback: ${this.baseUrl}/models`);
+      
       const response = await fetch(`${this.baseUrl}/models`, {
         method: 'GET',
         headers: {
@@ -165,15 +208,15 @@ export class GrokAPI {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`[GrokAPI] Connection test successful, response:`, JSON.stringify(data, null, 2));
+        console.log(`[GrokAPI] Models endpoint test successful, response:`, JSON.stringify(data, null, 2));
         return true;
       } else {
         const errorText = await response.text();
-        console.error(`[GrokAPI] Connection test failed: ${response.status}`, errorText);
+        console.error(`[GrokAPI] Models endpoint test failed: ${response.status}`, errorText);
         return false;
       }
     } catch (error) {
-      console.error(`[GrokAPI] Connection test error:`, error);
+      console.error(`[GrokAPI] Models endpoint test error:`, error);
       return false;
     }
   }
