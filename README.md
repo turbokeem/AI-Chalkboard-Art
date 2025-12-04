@@ -59,7 +59,7 @@
 
 点击上方按钮 **[Deploy to Cloudflare Pages]**，即可自动部署。
 
-部署完成后，只需在 Cloudflare 后台配置以下两项：
+部署完成后，只需在 Cloudflare 后台配置以下三项：
 
 1. **环境变量**：在项目 Settings -> Environment variables 中设置：
    - `GEMINI_API_KEY`: 你的 Google API Key
@@ -70,6 +70,10 @@
 2. **R2 存储桶绑定**：在 Settings -> Functions -> R2 Bucket Bindings 中：
    - Variable name: `R2_BUCKET`
    - 选择你的 R2 bucket
+
+3. **KV 命名空间绑定**：在 Settings -> Functions -> KV namespace bindings 中：
+   - Variable name: `ADMIN_KV`
+   - 创建并选择KV命名空间
 
 然后重试部署即可。
 
@@ -96,7 +100,22 @@
    - **方案 B (简单)**: 点击 **R2.dev subdomain** 下的 "Allow Access"，获得一个 `pub-xxx.r2.dev` 的地址。
    - **记下这个域名**，稍后要用。
 
-### 第三步：创建 Cloudflare Pages 项目
+### 第三步：创建 KV 命名空间
+*⚠️ 管理后台配置数据存储必需步骤*
+
+1. **创建命名空间**：
+   - 在 Cloudflare Dashboard 左侧菜单，点击 **Workers & Pages**。
+   - 在左侧子菜单中点击 **KV**。
+   - 点击 **Create namespace**（创建命名空间）。
+   - **Namespace name**：填 `admin-config`（或其他你喜欢的名字）
+   - 点击 **Add**。
+
+2. **复制 KV ID**（备用，但主要是选择绑定）：
+   - 创建成功后，进入该 KV 命名空间的 **Settings** 页面  
+   - 页面 URL 中类似：`.../workers/kv/namespaces/abc123def456/settings`
+   - **复制 `abc123def456`** 这就是 KV ID（备用）
+
+### 第四步：创建 Cloudflare Pages 项目
 *⚠️ 避坑预警：千万不要创建成 "Worker" 项目！*
 
 1. 回到 Cloudflare Dashboard 主页，点击左侧 **Workers & Pages**。
@@ -111,7 +130,17 @@
    - **Build command (构建命令)**: **留空！什么都别填！** 
    - **Build output directory (构建输出目录)**: `public` (⚠️必须填这个)。
 
-### 第四步：设置环境变量
+### 第五步：绑定 KV 命名空间
+*管理后台要运行，必须先绑定 ADMIN_KV*
+
+1. 项目创建完成后，进入 **Settings (设置)** -> **函数绑定**。
+2. 找到 **KV namespace bindings**（KV 命名空间绑定）。
+3. 点击 **Add binding**（添加绑定）：
+   - **Variable name**: `ADMIN_KV`（**必须是这个！大小写敏感**）
+   - **KV namespace**: 选择你在第三步创建的 `admin-config`
+   - 点击 **Save**。
+
+### 第六步：设置环境变量
 在创建页面的下方，或者项目创建后的 **Settings -> Environment variables** 中添加：
 
 | 变量名 | 示例值 | 说明 |
@@ -122,17 +151,17 @@
 | `ENV_SECRET_KEY` | `admin123` | 管理后台密码 (建议设置复杂) |
 | `AI_MODEL_URL` | (留空) | 除非你用第三方中转，否则**不要填**，直接删掉此行 |
 
-### 第五步：绑定 R2 存储桶
+### 第七步：绑定 R2 存储桶
 *代码要访问 R2，必须先在后台"插上电"。*
 
-1. 项目创建完成后，进入 **Settings (设置)** -> **绑定Pages Functions (函数)**。
+1. 项目创建完成后，进入 **Settings (设置)** -> **函数绑定**。
 2. 找到 **R2 Bucket Bindings** (R2 存储桶绑定)。
 3. 点击 **Add binding** (添加绑定)。
 4. **Variable name (变量名)**: 必须填 `R2_BUCKET` (大小写敏感，必须完全一致)。
 5. **R2 Bucket**: 选择你在第二步创建的那个 bucket。
 6. 点击 **Save**。
 
-### 第六步：重新部署
+### 第八步：重新部署
 因为刚才修改了绑定和环境变量，需要重新部署才能生效。
 
 1. 进入 **Deployments (部署)** 标签页。
@@ -188,7 +217,15 @@
    - **原因**：`ENV_SECRET_KEY` 未设置或错误。
    - **解法**：在环境变量中正确设置密码，重新部署后生效。
 
-6. **错误：所有API都失败**
+6. **错误：管理后台无法打开 (405错误)**
+   - **原因**：ADMIN_KV 没有绑定或 Variable name 填写错误。
+   - **解法**：确保 KV namespace bindings 中 Variable name 是 `ADMIN_KV`（大小写敏感）。
+
+7. **错误：API配置无法保存**
+   - **原因**：KV 命名空间绑定缺失或配置错误。
+   - **解法**：重新检查 KV namespace bindings，确保 `ADMIN_KV` 正确绑定。
+
+8. **错误：所有API都失败**
    - **原因**：可能是网络问题或API密钥失效。
    - **解法**：检查管理后台API状态，更新密钥，等待30分钟自动恢复。
 
@@ -239,8 +276,16 @@ functions/
 └── types.ts            # 类型定义
 ```
 
+### 数据存储架构
+- **R2 存储桶**: 存储生成的图片文件
+- **KV 命名空间 (ADMIN_KV)**: 存储管理后台的配置数据
+  - API配置信息 (apis key)
+  - 提示词配置 (prompts key)
+  - 用户配置数据
+
 ### 数据流
 1. 用户输入 → 前端处理 → API调用 → 多层兜底 → 图片生成 → R2存储 → 返回结果
+2. 管理后台 → 认证 → API配置 → 存储到ADMIN_KV → 实时更新
 
 ---
 
