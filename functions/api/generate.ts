@@ -3,6 +3,7 @@ import { buildPromptWithEnv } from '../lib/prompts';
 import { KeyManager } from '../lib/key-manager';
 import { GeminiModel } from '../lib/gemini'; 
 import { GeminiAdvanced } from '../lib/gemini-advanced';
+import { GrokAPI } from '../lib/grok';
 import { saveImageToR2 } from '../lib/storage';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -34,40 +35,30 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     // 3. 构建提示词（支持自定义提示词）
     let prompt = '';
-    let usedStyle = body.style || 'blackboard'; // 默认使用黑板风格
+    let usedStyle = body.style || 'blackboard';
     
     if (adminConfig?.prompts && adminConfig.prompts.length > 0) {
-      // 使用自定义提示词
       let matchedPrompt = null;
-      
-      // 优先按key匹配
       matchedPrompt = adminConfig.prompts.find(p => p.key === usedStyle);
-      
-      // 如果key没匹配到，尝试按name匹配
       if (!matchedPrompt) {
         matchedPrompt = adminConfig.prompts.find(p => p.name === usedStyle);
       }
-      
-      // 如果还是没匹配到，使用第一个自定义提示词
       if (!matchedPrompt && adminConfig.prompts.length > 0) {
         matchedPrompt = adminConfig.prompts[0];
         console.log('使用第一个自定义提示词:', matchedPrompt.name);
       }
       
       if (matchedPrompt) {
-        // 如果自定义提示词是完整内容（包含实际描述文字），使用完整内容
         if (matchedPrompt.prompt && matchedPrompt.prompt.length > 20) {
           prompt = matchedPrompt.prompt.replace(/\$\{name\}/g, body.character_name);
           console.log('使用自定义完整提示词:', matchedPrompt.key, '长度:', prompt.length);
         } else {
-          // 简单提示词，使用原有逻辑
           prompt = await buildPromptWithEnv(body.character_name, matchedPrompt.key, env);
           console.log('使用自定义简单提示词:', matchedPrompt.key);
         }
       }
     }
     
-    // 如果没有自定义提示词，使用内置提示词
     if (!prompt) {
       prompt = await buildPromptWithEnv(body.character_name, usedStyle, env);
       console.log('使用内置提示词:', usedStyle);
@@ -75,119 +66,140 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     console.log('最终提示词长度:', prompt.length, '前100字符:', prompt.substring(0, 100));
 
-    // 4. 选择API服务（修复API密钥检查逻辑）
-    let imageBuffer;
-    let usedApi = 'Google Gemini';
-    let allErrors = []; // 收集所有错误信息
+    // 4. 选择API服务（修复字段名兼容 + Provider适配）
+    let imageBuffer: ArrayBuffer | null = null;
+    let usedApi = 'Unknown';
+    let allErrors: string[] = [];
     
-    // 优先检查环境变量是否有Gemini API密钥
+    // 检查环境变量Gemini
     const hasGeminiKey = env.GEMINI_API_KEY && env.GEMINI_API_KEY.trim().length > 0;
-    console.log('环境变量Gemini API密钥状态:', !!env.GEMINI_API_KEY, '长度:', env.GEMINI_API_KEY?.length || 0);
+    console.log('环境变量Gemini API密钥状态:', hasGeminiKey);
     
     if (adminConfig?.api_configs && adminConfig.api_configs.length > 0) {
-      // 使用管理员配置的API服务
-      const enabledApis = adminConfig.api_configs.filter(api => api.enabled);
-      console.log('可用的API服务数量:', enabledApis.length);
-      console.log('API服务详情:', enabledApis.map(api => ({ 
-        name: api.name, 
-        hasKey: !!api.key, 
-        keyLength: api.key?.length || 0,
-        enabled: api.enabled 
+      // 过滤启用的API，并按优先级排序（数字越小优先级越高）
+      const enabledApis = adminConfig.api_configs
+        .filter(api => api.enabled)
+        .sort((a, b) => (a.priority || 99) - (b.priority || 99));
+      
+      console.log('可用API服务（按优先级排序）:', enabledApis.map(api => ({
+        name: api.name,
+        provider: api.provider,
+        priority: api.priority,
+        hasKey: !!(api.apiKey || api.key),
+        baseUrl: api.baseUrl || api.url
       })));
       
-      // 优先尝试有key的API
-      const apisWithKey = enabledApis.filter(api => api.key && api.key.trim().length > 0);
-      const apisWithoutKey = enabledApis.filter(api => !api.key || api.key.trim().length === 0);
-      
-      // 先尝试有key的配置
-      for (const apiConfig of [...apisWithKey, ...apisWithoutKey]) {
+      for (const apiConfig of enabledApis) {
         try {
-          console.log(`尝试使用API服务: ${apiConfig.name} (有Key: ${!!apiConfig.key})`);
+          // 兼容两种字段名
+          const apiKey = apiConfig.apiKey || apiConfig.key || '';
+          const baseUrl = apiConfig.baseUrl || apiConfig.url || '';
+          const model = apiConfig.model || '';
+          const provider = apiConfig.provider || 'gemini';
           
-          if (apiConfig.key && apiConfig.key.trim().length > 0) {
-            // 有API密钥，使用GeminiAdvanced
-            const aiModel = new GeminiAdvanced(apiConfig);
-            imageBuffer = await aiModel.generateImage(prompt);
-          } else {
-            // 没有API密钥，尝试使用环境变量的Gemini
-            if (!hasGeminiKey) {
-              throw new Error('没有配置环境变量GEMINI_API_KEY');
-            }
-            const keyManager = new KeyManager(env.GEMINI_API_KEY);
-            const selectedKey = keyManager.getNextKey();
-            const modelName = apiConfig.model || env.AI_MODEL_NAME || 'gemini-3-pro-image-preview';
-            const baseUrl = apiConfig.url || env.AI_MODEL_URL || 'https://generativelanguage.googleapis.com/v1beta/models';
-            
-            const aiModel = new GeminiModel(selectedKey, modelName, baseUrl);
-            imageBuffer = await aiModel.generateImage(prompt);
+          console.log(`尝试API: ${apiConfig.name} (provider: ${provider}, priority: ${apiConfig.priority})`);
+          
+          if (!apiKey && provider !== 'gemini') {
+            console.log(`跳过 ${apiConfig.name}: 没有API密钥`);
+            continue;
           }
           
-          usedApi = apiConfig.name;
-          console.log(`🎉 API服务 ${apiConfig.name} 成功生成图片`);
-          break; // 成功则跳出循环
-        } catch (error) {
-          const errorMsg = `API服务 ${apiConfig.name} 失败: ${error.message}`;
+          // 根据 provider 类型选择适配器
+          if (provider === 'grok') {
+            // 使用 Grok 适配器
+            console.log(`使用Grok适配器: ${baseUrl}, model: ${model}`);
+            const grokApi = new GrokAPI(baseUrl, apiKey, model);
+            const imageUrl = await grokApi.generateImage(prompt);
+            
+            // Grok 返回的是 URL，需要下载图片
+            if (imageUrl) {
+              console.log(`Grok返回图片URL: ${imageUrl}`);
+              const imageResponse = await fetch(imageUrl);
+              if (imageResponse.ok) {
+                imageBuffer = await imageResponse.arrayBuffer();
+              } else {
+                throw new Error(`下载Grok图片失败: ${imageResponse.status}`);
+              }
+            }
+          } else if (provider === 'custom' || provider === 'gemini') {
+            // 使用 Gemini 兼容适配器
+            if (apiKey) {
+              console.log(`使用GeminiAdvanced: ${baseUrl}, model: ${model}`);
+              const aiModel = new GeminiAdvanced({
+                name: apiConfig.name,
+                url: baseUrl,
+                key: apiKey,
+                model: model,
+                enabled: true
+              });
+              imageBuffer = await aiModel.generateImage(prompt);
+            } else if (hasGeminiKey) {
+              // 没有自定义key，使用环境变量
+              const keyManager = new KeyManager(env.GEMINI_API_KEY);
+              const selectedKey = keyManager.getNextKey();
+              const modelName = model || env.AI_MODEL_NAME || 'gemini-2.0-flash-preview-image-generation';
+              const url = baseUrl || env.AI_MODEL_URL || 'https://generativelanguage.googleapis.com/v1beta/models';
+              
+              const aiModel = new GeminiModel(selectedKey, modelName, url);
+              imageBuffer = await aiModel.generateImage(prompt);
+            } else {
+              throw new Error('没有可用的API密钥');
+            }
+          } else {
+            console.log(`未知的provider类型: ${provider}`);
+            continue;
+          }
+          
+          if (imageBuffer && imageBuffer.byteLength > 0) {
+            usedApi = apiConfig.name;
+            console.log(`✅ ${apiConfig.name} 成功生成图片，大小: ${imageBuffer.byteLength} bytes`);
+            break;
+          }
+        } catch (error: any) {
+          const errorMsg = `${apiConfig.name} 失败: ${error.message}`;
           console.error(`❌ ${errorMsg}`);
           allErrors.push(errorMsg);
-          continue; // 失败则尝试下一个API
+          continue;
         }
-      }
-      
-      if (!imageBuffer && allErrors.length > 0) {
-        console.log('⚠️ 所有自定义API都失败，错误信息:', allErrors);
       }
     }
     
-    // 如果自定义API都失败或没有配置，使用默认Gemini（环境变量）
-    if (!imageBuffer) {
+    // 兜底：使用环境变量的 Gemini
+    if (!imageBuffer && hasGeminiKey) {
       try {
-        console.log('使用默认Gemini服务（环境变量）');
-        
-        if (!hasGeminiKey) {
-          throw new Error('环境变量GEMINI_API_KEY未配置或为空');
-        }
-        
+        console.log('所有自定义API失败，使用环境变量Gemini兜底');
         const keyManager = new KeyManager(env.GEMINI_API_KEY);
         const selectedKey = keyManager.getNextKey();
-        const modelName = env.AI_MODEL_NAME || 'gemini-3-pro-image-preview';
+        const modelName = env.AI_MODEL_NAME || 'gemini-2.0-flash-preview-image-generation';
         const baseUrl = env.AI_MODEL_URL || 'https://generativelanguage.googleapis.com/v1beta/models';
-        
-        console.log('Gemini配置:', { model: modelName, baseUrl, keyLength: selectedKey?.length || 0 });
         
         const aiModel = new GeminiModel(selectedKey, modelName, baseUrl);
         imageBuffer = await aiModel.generateImage(prompt);
-        usedApi = 'Google Gemini (环境变量)';
-      } catch (fallbackError) {
-        console.error('❌ 默认Gemini也失败:', fallbackError);
-        allErrors.push(`默认Gemini失败: ${fallbackError.message}`);
+        usedApi = 'Google Gemini (环境变量兜底)';
+        console.log('✅ 环境变量Gemini兜底成功');
+      } catch (fallbackError: any) {
+        console.error('❌ 环境变量Gemini兜底也失败:', fallbackError.message);
+        allErrors.push(`环境变量Gemini兜底失败: ${fallbackError.message}`);
       }
     }
 
-    // 5. 检查是否成功生成图片
+    // 5. 检查是否成功
     if (!imageBuffer) {
-      const errorMessage = allErrors.length > 0 
-        ? `所有API服务都失败了:\n${allErrors.join('\n')}\n\n请检查:\n1. 环境变量GEMINI_API_KEY是否正确配置\n2. 管理员后台的API配置是否完整`
-        : '图片生成失败，请重试';
-      
-      console.error('❌ 所有API都失败了，详细错误:', allErrors);
-      
+      console.error('❌ 所有API都失败:', allErrors);
       return new Response(JSON.stringify({ 
         success: false, 
-        error: '所有API服务都失败了，请检查API配置',
-        details: errorMessage,
+        error: '所有API服务都失败了',
         errors: allErrors,
         debug: {
-          hasGeminiKey: hasGeminiKey,
+          hasGeminiKey,
           configuredApis: adminConfig?.api_configs?.length || 0,
-          apiKeyLength: env.GEMINI_API_KEY?.length || 0,
-          promptLength: prompt.length,
-          suggestion: '请在Cloudflare Pages后台添加环境变量GEMINI_API_KEY，或在管理后台配置有效API密钥'
+          promptLength: prompt.length
         }
       }), { status: 500 });
     }
 
-    // 6. 保存图片到 R2
-    const safeFilename = body.character_name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    // 6. 保存到 R2
+    const safeFilename = body.character_name.replace(/[^a-z0-9\u4e00-\u9fa5]/gi, '_').toLowerCase();
     const imageUrl = await saveImageToR2(env, imageBuffer, safeFilename);
 
     // 7. 返回结果
@@ -196,23 +208,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       image_url: imageUrl,
       prompt_used: prompt,
       api_used: usedApi,
-      style: usedStyle,
-      prompt_length: prompt.length
+      style: usedStyle
     }), {
       headers: { 'Content-Type': 'application/json' }
     });
 
   } catch (err: any) {
     console.error('❌ Generation Error:', err);
-    console.error('Error details:', {
-      message: err.message,
-      stack: err.stack,
-      name: err.name
-    });
     return new Response(JSON.stringify({ 
       success: false, 
       error: err.message || 'Internal Server Error',
-      details: err.stack
+      stack: err.stack
     }), { status: 500 });
   }
 };
