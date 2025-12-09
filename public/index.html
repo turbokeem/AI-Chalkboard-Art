@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 粉笔画生成器</title>
+    <title>AI脑洞画布</title>
     <!-- 引入 Tailwind CSS (无需构建，CDN直接引入) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Google Fonts -->
@@ -99,7 +99,32 @@
         .hover-scale:hover {
             transform: scale(1.05);
         }
-        /* 占位符背景图样式 - 改为contain显示完整图片 */
+        /* 九宫格样式 */
+        .style-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+            overflow: hidden;
+            position: relative;
+        }
+        .style-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        .style-card.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        .style-card .thumbnail {
+            transition: transform 0.3s ease;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .style-card:hover .thumbnail {
+            transform: scale(1.05);
+        }
+        /* 占位符背景图样式 - 保持原有样式 */
         .placeholder-bg {
             background-image: url('https://pic.icon.pp.ua/generated/IMG_4874.jpeg');
             background-size: contain !important;
@@ -126,48 +151,51 @@
 <body class="min-h-screen flex flex-col items-center justify-center p-4 relative">
 
     <!-- 主容器 -->
-    <div class="w-full max-w-4xl bg-[#18181b] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-10 fade-in">
+    <div class="w-full max-w-6xl bg-[#18181b] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-10 fade-in">
         
         <!-- 头部区域 -->
-        <div class="p-8 border-b border-gray-800 text-center">
-            <h1 class="text-4xl font-bold tracking-tight text-white mb-2 chalk-effect">AI 粉笔画生成器</h1>
-            <p class="text-gray-400 text-sm uppercase tracking-widest">基于 Gemini AI • 多种艺术风格</p>
+        <div class="p-6 md:p-8 border-b border-gray-800 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2 chalk-effect">
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">AI 脑洞画布</span>
+            </h1>
+            <p class="text-gray-400 text-sm uppercase tracking-wider">选择风格 → 输入内容 → 一键生成艺术作品</p>
+            <p class="text-gray-500 text-xs mt-2">Powered by Gemini AI • 已收录 <span id="styleCount"></span> 种艺术风格</p>
         </div>
 
-        <!-- 核心交互区 -->
-        <div class="flex flex-col md:flex-row">
+        <!-- 管理后台入口 -->
+        <div class="text-center mb-4">
+            <a href="/admin.html" class="text-gray-500 text-xs hover:text-gray-300 transition flex items-center justify-center space-x-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span>管理后台</span>
+            </a>
+        </div>
+
+        <!-- 核心交互区：左右布局 -->
+        <div class="flex flex-col lg:flex-row">
             
             <!-- 左侧：控制面板 -->
-            <div class="w-full md:w-1/3 p-8 border-r border-gray-800 bg-[#202023]">
+            <div class="w-full lg:w-1/3 p-6 md:p-8 border-r border-gray-800 bg-[#202023]">
                 <form id="artForm" class="space-y-6">
                     
-                    <!-- 输入框 -->
+                    <!-- 输入框 - 动态化 -->
                     <div>
-                        <label for="character" class="block text-sm font-medium text-gray-300 mb-2">动漫角色名称</label>
+                        <label id="inputLabel" for="character" class="block text-sm font-medium text-gray-300 mb-2">角色名称</label>
                         <input type="text" id="character" name="character" required
                             class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                            placeholder="例如：疯狂动物城2">
-                        <p class="mt-2 text-xs text-gray-500">输入动漫角色名称即可生成艺术画作。</p>
+                            placeholder="例如：疯狂动物城">
+                        <p id="inputHint" class="mt-2 text-xs text-gray-500">输入动漫角色或卡通人物名称，AI 将绘制黑板粉笔画风格作品。</p>
                     </div>
 
-                    <!-- 风格选择 -->
-                    <div>
-                        <label for="style" class="block text-sm font-medium text-gray-300 mb-2">绘画风格</label>
-                        <div class="relative">
-                            <select id="style" name="style" 
-                                class="w-full bg-[#18181b] border border-gray-700 rounded-lg px-4 py-3 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                                <!-- 动态加载选项 -->
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- 隐藏的风格值 -->
+                    <input type="hidden" name="style" id="selectedStyle" value="blackboard">
 
                     <!-- 生成按钮 -->
                     <div>
                         <button type="submit" id="generateBtn"
                             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed hover-scale">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
                             <span>生成作品</span>
                         </button>
                         <!-- 计数器显示 -->
@@ -178,29 +206,26 @@
                     <div id="statusMessage" class="hidden text-center text-sm p-3 rounded bg-gray-800 text-gray-300"></div>
                 </form>
 
-                <!-- 说明文档 -->
-                <div class="mt-8 pt-6 border-t border-gray-700">
-                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">使用说明</h3>
-                    <ul class="text-xs text-gray-500 space-y-2 list-disc list-inside">
-                        <li>输入角色名称</li>
-                        <li>选择绘画风格</li>
-                        <li>AI 生成提示词</li>
-                        <li>Gemini 绘制作品</li>
-                        <li>图片存储到 R2</li>
-                    </ul>
+                <!-- 当前选中风格提示 -->
+                <div id="selectedStyleInfo" class="mt-6 p-4 bg-[#18181b] rounded-lg border border-gray-800">
+                    <p class="text-xs text-gray-500 mb-1">当前风格</p>
+                    <p class="text-white font-medium flex items-center">
+                        <span id="currentStyleEmoji" class="mr-2 text-xl">🏫</span>
+                        <span id="currentStyleText">黑板粉笔画</span>
+                    </p>
                 </div>
             </div>
 
             <!-- 右侧：展示区域 -->
-            <div class="w-full md:w-2/3 p-8 flex items-center justify-center bg-[#0f0f10] min-h-[500px] relative">
+            <div class="w-full lg:w-2/3 p-6 md:p-8 flex items-center justify-center bg-[#0f0f10] min-h-[500px] relative">
                 
-                <!-- 占位符 - 添加背景图 -->
-                <div id="placeholder" class="text-center placeholder-bg flex flex-col items-center justify-center">
+                <!-- 占位符 - 保持原有样式 -->
+                <div id="placeholder" class="text-center placeholder-bg flex flex-col items-center justify-center w-full">
                     <div class="placeholder-content">
                         <div class="inline-block p-4 rounded-full bg-gray-800/80 backdrop-blur-sm mb-4">
                             <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         </div>
-                        <p class="text-white text-lg font-medium">您的画作将在这里显示</p>
+                        <p class="text-white text-lg font-medium">选择风格，输入内容，生成您的专属艺术作品</p>
                     </div>
                 </div>
 
@@ -217,7 +242,7 @@
                             <div class="loader"></div>
                             <p class="text-blue-400 text-sm animate-pulse font-medium">正在设计提示词...</p>
                         </div>
-                        <p class="text-gray-600 text-xs animate-fade-in" id="loadingStep">连接到神经网络</p>
+                        <p class="text-gray-600 text-sm animate-fade-in" id="loadingStep">连接到神经网络</p>
                         <div class="mt-2 w-64 mx-auto">
                             <div class="w-full bg-gray-700/50 rounded-full h-1">
                                 <div class="bg-gradient-to-r from-blue-600 to-indigo-600 h-1 rounded-full transition-all duration-500" id="progressBar" style="width: 0%"></div>
@@ -242,6 +267,40 @@
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- 第一步：风格选择（九宫格） - 新增区域 -->
+        <div class="px-6 md:px-8 pb-6 border-t border-gray-800">
+            <h2 class="text-lg font-semibold text-gray-300 mb-4 flex items-center">
+                <span class="text-2xl mr-3">🎨</span>
+                选择您喜欢的风格
+            </h2>
+            <div id="styleGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- 风格卡片将由JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <!-- 说明文档 -->
+        <div class="px-6 md:px-8 py-6 bg-[#202023] border-t border-gray-800">
+            <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">使用指南</h3>
+            <ul class="text-xs text-gray-500 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <li class="flex items-start">
+                    <span class="text-blue-400 mr-2">①</span>
+                    <span>点击风格卡片选择效果</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="text-blue-400 mr-2">②</span>
+                    <span>输入框内填写具体内容</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="text-blue-400 mr-2">③</span>
+                    <span>点击生成等待AI创作</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="text-blue-400 mr-2">④</span>
+                    <span>下载保存您的作品</span>
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -307,6 +366,13 @@
         const donateArea = document.getElementById('donateArea');
         const carouselContainer = document.getElementById('carouselContainer');
         const progressBar = document.getElementById('progressBar');
+        const styleGrid = document.getElementById('styleGrid');
+        const inputLabel = document.getElementById('inputLabel');
+        const inputHint = document.getElementById('inputHint');
+        const currentStyleEmoji = document.getElementById('currentStyleEmoji');
+        const currentStyleText = document.getElementById('currentStyleText');
+        const selectedStyle = document.getElementById('selectedStyle');
+        const styleCount = document.getElementById('styleCount');
 
         const MAX_DAILY_LIMIT = 3;
 
@@ -323,7 +389,7 @@
                 if (response.ok) {
                     const config = await response.json();
                     SITE_CONFIG = config;
-                    updateStyleOptions();
+                    updateStyleGrid();
                     console.log('已加载管理员配置');
                 }
             } catch (error) {
@@ -350,73 +416,136 @@
                         'https://pic.icon.pp.ua/generated/IMG_4871.jpeg',
                         'https://pic.icon.pp.ua/generated/IMG_4872.jpeg',
                         'https://pic.icon.pp.ua/generated/IMG_4874.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4875.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4876.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4877.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4879.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4880.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4881.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4882.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4883.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4884.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4885.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4886.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4887.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4889.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4890.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4891.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4892.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4893.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4894.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4895.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4896.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4899.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4900.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4901.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4902.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4905.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4906.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4907.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4908.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4909.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4910.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4911.jpeg',
-                        'https://pic.icon.pp.ua/generated/IMG_4912.jpeg'
+                        'https://pic.icon.pp.ua/generated/IMG_4875.jpeg'
                     ],
                     prompts: [
-                        { name: '黑板粉笔画', key: 'blackboard', prompt: '' },
-                        { name: '现实主义云彩', key: 'cloud', prompt: '' },
-                        { name: '课本铅笔画', key: 'textbook', prompt: '' }
+                        { 
+                            name: '黑板粉笔画', 
+                            key: 'blackboard', 
+                            prompt: '',
+                            input_label: '动漫角色名称',
+                            input_placeholder: '例如：疯狂动物城、海绵宝宝、哪吒',
+                            input_hint: '输入动漫角色或卡通人物名称，AI 将绘制黑板粉笔画风格作品'
+                        }
                     ]
                 };
-                updateStyleOptions();
+                updateStyleGrid();
             }
         }
 
-        // 更新风格选择器
-        function updateStyleOptions() {
-            const styleSelect = document.getElementById('style');
-            styleSelect.innerHTML = '';
+        // 更新九宫格风格选择
+        function updateStyleGrid() {
+            styleGrid.innerHTML = '';
             
             // 添加对应的emoji映射
             const emojiMap = {
                 'blackboard': '🏫',
                 'cloud': '☁️',
                 'textbook': '✏️',
-                'zombie': '💀',
-                'anime': '🎌',
-                'realistic': '📸'
+                'zombie': '🧟',
+                'punk': '🎤',
+                'Cyber': '🤖',
+                'star': '🌌',
+                'fly': '🎆',
+                'brand_miniature': '🏬'
+            };
+            
+            // 默认缩略图
+            const defaultThumbnails = {
+                'blackboard': 'https://pic.icon.pp.ua/generated/IMG_4874.jpeg',
+                'cloud': 'https://pic.icon.pp.ua/generated/IMG_4837.jpeg',
+                'textbook': 'https://pic.icon.pp.ua/generated/IMG_4840.jpeg',
+                'zombie': 'https://pic.icon.pp.ua/generated/IMG_4841.jpeg',
+                'punk': 'https://pic.icon.pp.ua/generated/IMG_4848.jpeg',
+                'Cyber': 'https://pic.icon.pp.ua/generated/IMG_4849.jpeg',
+                'star': 'https://pic.icon.pp.ua/generated/IMG_4853.jpeg',
+                'fly': 'https://pic.icon.pp.ua/generated/IMG_4855.jpeg',
+                'brand_miniature': 'https://pic.icon.pp.ua/generated/IMG_4973.jpeg'
             };
             
             SITE_CONFIG.prompts.forEach(prompt => {
-                const option = document.createElement('option');
-                option.value = prompt.key;
                 const emoji = emojiMap[prompt.key] || '🎨';
-                const defaultText = prompt.key === 'blackboard' ? ' (默认)' : '';
-                option.textContent = `${emoji} ${prompt.name}${defaultText}`;
-                option.selected = prompt.key === 'blackboard';
-                styleSelect.appendChild(option);
+                const thumbnail = prompt.thumbnail || defaultThumbnails[prompt.key] || 'https://pic.icon.pp.ua/generated/IMG_4837.jpeg';
+                
+                const card = document.createElement('div');
+                card.className = `style-card p-3 bg-gray-800 rounded-lg cursor-pointer ${prompt.key === 'blackboard' ? 'selected' : ''}`;
+                card.dataset.key = prompt.key;
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="${thumbnail}" alt="${prompt.name}" class="thumbnail rounded-lg mb-2">
+                        <div class="text-center">
+                            <p class="text-white text-sm font-medium">${emoji} ${prompt.name}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // 点击事件
+                card.addEventListener('click', () => selectStyle(prompt.key));
+                
+                styleGrid.appendChild(card);
             });
+            
+            // 更新风格计数
+            styleCount.textContent = SITE_CONFIG.prompts.length;
+            
+            // 默认选中黑板粉笔画
+            selectStyle('blackboard');
+        }
+
+        // 选择风格
+        function selectStyle(styleKey) {
+            const prompt = SITE_CONFIG.prompts.find(p => p.key === styleKey);
+            if (!prompt) return;
+            
+            // 更新所有卡片的选中状态
+            document.querySelectorAll('.style-card').forEach(card => {
+                if (card.dataset.key === styleKey) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+            
+            // 更新隐藏的style值
+            selectedStyle.value = styleKey;
+            
+            // 更新输入框标签和文字
+            if (prompt.input_label) {
+                inputLabel.textContent = prompt.input_label;
+            } else {
+                inputLabel.textContent = '角色名称';
+            }
+            
+            // 更新占位符
+            const characterInput = document.getElementById('character');
+            if (prompt.input_placeholder) {
+                characterInput.placeholder = prompt.input_placeholder;
+            } else {
+                characterInput.placeholder = '请输入内容';
+            }
+            
+            // 更新提示文字
+            if (prompt.input_hint) {
+                inputHint.textContent = prompt.input_hint;
+            } else {
+                inputHint.textContent = '输入内容，AI 将为您创作艺术作品。';
+            }
+            
+            // 更新当前风格显示
+            const emojiMap = {
+                'blackboard': '🏫',
+                'cloud': '☁️',
+                'textbook': '✏️',
+                'zombie': '🧟',
+                'punk': '🎤',
+                'Cyber': '🤖',
+                'star': '🌌',
+                'fly': '🎆',
+                'brand_miniature': '🏬'
+            };
+            
+            currentStyleEmoji.textContent = emojiMap[styleKey] || '🎨';
+            currentStyleText.textContent = prompt.name || styleKey;
         }
 
         // === 轮播管理器：静态展示 + 预加载系统 ===
@@ -624,7 +753,7 @@
             
             // 2. UI Reset
             const character = document.getElementById('character').value.trim();
-            const style = document.getElementById('style').value;
+            const style = selectedStyle.value;
             if (!character) return;
 
             setLoading(true);
@@ -759,7 +888,7 @@
                 progressBar.style.width = '0%';
             } else {
                 generateBtn.disabled = false;
-                generateBtn.innerHTML = '<span>生成作品</span>';
+                generateBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg><span>生成作品</span>';
                 loadingState.classList.add('hidden');
             }
         }
@@ -773,20 +902,6 @@
             statusMessage.className = `text-center text-sm p-3 rounded ${type === 'error' ? 'bg-red-900/50 text-red-200 border border-red-800' : 'bg-gray-800 text-gray-300'}`;
             statusMessage.classList.remove('hidden');
         }
-
-        // 监听风格变化，动态更新占位符文本
-        document.getElementById('style').addEventListener('change', function(e) {
-            const style = e.target.value;
-            let placeholderText;
-            if (style === 'cloud') {
-                placeholderText = '您的云彩画作将在这里显示';
-            } else if (style === 'textbook') {
-                placeholderText = '您的铅笔涂鸦将在这里显示';
-            } else {
-                placeholderText = '您的黑板画作将在这里显示';
-            }
-            document.querySelector('#placeholder .placeholder-content p').textContent = placeholderText;
-        });
 
         // 初始化
         updateCounterUI();
