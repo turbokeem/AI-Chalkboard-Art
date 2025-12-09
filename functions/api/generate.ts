@@ -83,8 +83,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       
       console.log('可用API服务（按优先级排序）:', enabledApis.map(api => ({
         name: api.name,
-        provider: api.provider,
-        priority: api.priority,
+        provider: api.provider || 'gemini',
+        priority: api.priority || 99,
         hasKey: !!(api.apiKey || api.key),
         baseUrl: api.baseUrl || api.url
       })));
@@ -97,18 +97,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           const model = apiConfig.model || '';
           const provider = apiConfig.provider || 'gemini';
           
-          console.log(`尝试API: ${apiConfig.name} (provider: ${provider}, priority: ${apiConfig.priority})`);
-          
-          if (!apiKey && provider !== 'gemini') {
-            console.log(`跳过 ${apiConfig.name}: 没有API密钥`);
-            continue;
-          }
+          console.log(`尝试API: ${apiConfig.name} (provider: ${provider}, priority: ${apiConfig.priority || 99})`);
           
           // 根据 provider 类型选择适配器
           if (provider === 'grok') {
-            // 使用 Grok 适配器
+            // 检查 Grok 必需的参数
+            if (!apiKey) {
+              console.log(`跳过 ${apiConfig.name}: Grok需要API密钥`);
+              continue;
+            }
+            
+            // 使用 Grok 适配器（修复：传入配置对象）
             console.log(`使用Grok适配器: ${baseUrl}, model: ${model}`);
-            const grokApi = new GrokAPI(baseUrl, apiKey, model);
+            const grokApi = new GrokAPI({
+              baseUrl: baseUrl,
+              apiKey: apiKey,
+              model: model
+            });
             const imageUrl = await grokApi.generateImage(prompt);
             
             // Grok 返回的是 URL，需要下载图片
@@ -120,11 +125,30 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
               } else {
                 throw new Error(`下载Grok图片失败: ${imageResponse.status}`);
               }
+            } else {
+              throw new Error('Grok未返回图片URL');
             }
-          } else if (provider === 'custom' || provider === 'gemini') {
-            // 使用 Gemini 兼容适配器
+          } else if (provider === 'custom') {
+            // 自定义 Gemini 兼容 API
+            if (!apiKey) {
+              console.log(`跳过 ${apiConfig.name}: 自定义API需要密钥`);
+              continue;
+            }
+            
+            console.log(`使用GeminiAdvanced (custom): ${baseUrl}, model: ${model}`);
+            const aiModel = new GeminiAdvanced({
+              name: apiConfig.name,
+              url: baseUrl,
+              key: apiKey,
+              model: model,
+              enabled: true
+            });
+            imageBuffer = await aiModel.generateImage(prompt);
+          } else {
+            // provider === 'gemini' 或未指定
             if (apiKey) {
-              console.log(`使用GeminiAdvanced: ${baseUrl}, model: ${model}`);
+              // 有自定义 key，使用 GeminiAdvanced
+              console.log(`使用GeminiAdvanced (gemini): ${baseUrl}, model: ${model}`);
               const aiModel = new GeminiAdvanced({
                 name: apiConfig.name,
                 url: baseUrl,
@@ -134,7 +158,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
               });
               imageBuffer = await aiModel.generateImage(prompt);
             } else if (hasGeminiKey) {
-              // 没有自定义key，使用环境变量
+              // 没有自定义 key，使用环境变量
+              console.log(`使用环境变量Gemini: model: ${model || 'default'}`);
               const keyManager = new KeyManager(env.GEMINI_API_KEY);
               const selectedKey = keyManager.getNextKey();
               const modelName = model || env.AI_MODEL_NAME || 'gemini-2.0-flash-preview-image-generation';
@@ -143,11 +168,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
               const aiModel = new GeminiModel(selectedKey, modelName, url);
               imageBuffer = await aiModel.generateImage(prompt);
             } else {
-              throw new Error('没有可用的API密钥');
+              console.log(`跳过 ${apiConfig.name}: 没有可用的API密钥`);
+              continue;
             }
-          } else {
-            console.log(`未知的provider类型: ${provider}`);
-            continue;
           }
           
           if (imageBuffer && imageBuffer.byteLength > 0) {
