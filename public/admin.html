@@ -398,6 +398,7 @@
                         <div class="mt-4 p-4 bg-blue-900/20 rounded-lg border border-blue-800/50">
                             <p class="text-blue-300 text-sm">
                                 💡 新增提示词会自动同步到前端选择菜单，支持完整的自定义提示词内容。
+                                <br>新增的三个字段会动态更新前端输入框的标签、占位符和使用说明。
                             </p>
                         </div>
                     </div>
@@ -1044,7 +1045,7 @@
                                 ${api.provider} • ${api.model || '默认模型'} • 优先级: ${api.priority || 5}
                             </p>
                             <p class="text-gray-500 text-xs">
-                                ${api.url || '使用默认URL'} • 密钥: ${api.key ? `${api.key.slice(0, 4)}...${api.key.slice(-4)}` : '未设置'}
+                                ${api.url || api.baseUrl || '使用默认URL'} • 密钥: ${api.key || api.apiKey ? `${(api.key || api.apiKey).slice(0, 4)}...${(api.key || api.apiKey).slice(-4)}` : '未设置'}
                             </p>
                         </div>
                     </div>
@@ -1080,8 +1081,9 @@
             const newAPI = {
                 name,
                 provider,
-                baseUrl: url,
+                baseUrl: url || url,  // 兼容不同字段名
                 apiKey: key,
+                key: key,  // 兼容不同字段名
                 model,
                 priority,
                 enabled: true
