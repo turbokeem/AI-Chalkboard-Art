@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理后台 - AI 粉笔画生成器</title>
+    <title>管理后台 - AI脑洞画布</title>
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Google Fonts -->
@@ -107,7 +107,7 @@
                     </svg>
                 </div>
                 <h1 class="text-2xl font-bold text-white mb-2 chalk-effect">管理后台</h1>
-                <p class="text-gray-500 text-sm">AI 粉笔画生成器配置中心</p>
+                <p class="text-gray-500 text-sm">AI脑洞画布配置中心</p>
             </div>
 
             <form id="loginForm" class="space-y-6">
@@ -139,7 +139,7 @@
             </form>
 
             <div class="mt-6 pt-6 border-t border-gray-700 text-center">
-                <p class="text-gray-500 text-xs">默认账号: turbokeem / admin</p>
+                <p class="text-gray-500 text-xs">默认账号: admin / admin</p>
                 <p class="text-gray-600 text-xs mt-1">首次登录后请及时修改</p>
             </div>
         </div>
@@ -154,7 +154,7 @@
                 <div class="flex justify-between items-center mb-4">
                     <div>
                         <h1 class="text-2xl font-bold text-white chalk-effect">配置管理</h1>
-                        <p class="text-gray-500 text-sm mt-1">AI 粉笔画生成器 • 多API管理中心</p>
+                        <p class="text-gray-500 text-sm mt-1">AI脑洞画布 • 多API管理中心</p>
                     </div>
                     <button id="logoutBtn" class="bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-lg transition border border-red-800/50 hover:border-red-700">
                         <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -362,6 +362,26 @@
                                         添加提示词
                                     </button>
                                 </div>
+                                
+                                <!-- 新增的三个字段 -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label for="promptInputLabel" class="block text-sm font-medium text-gray-300 mb-1">输入框标签</label>
+                                        <input type="text" id="promptInputLabel" placeholder="如: 动漫角色名称" 
+                                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="promptInputPlaceholder" class="block text-sm font-medium text-gray-300 mb-1">占位符示例</label>
+                                        <input type="text" id="promptInputPlaceholder" placeholder="如: 哪吒之魔童降世、疯狂动物城" 
+                                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="promptInputHint" class="block text-sm font-medium text-gray-300 mb-1">使用说明</label>
+                                        <input type="text" id="promptInputHint" placeholder="给用户的输入提示说明" 
+                                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                
                                 <div>
                                     <label for="promptContent" class="block text-sm font-medium text-gray-300 mb-2">完整提示词内容 (可选)</label>
                                     <textarea id="promptContent" placeholder="输入完整的提示词内容，留空将使用内置模板。支持变量 ${name}" 
@@ -764,6 +784,9 @@
             const name = document.getElementById('promptName').value.trim();
             const key = document.getElementById('promptKey').value.trim();
             const content = document.getElementById('promptContent').value.trim();
+            const inputLabel = document.getElementById('promptInputLabel').value.trim();
+            const inputPlaceholder = document.getElementById('promptInputPlaceholder').value.trim();
+            const inputHint = document.getElementById('promptInputHint').value.trim();
             
             if (!name || !key) {
                 showStatus('请填写完整的提示词名称和键值', 'error');
@@ -783,7 +806,10 @@
             const newPrompt = {
                 name: name,
                 key: key,
-                prompt: content
+                prompt: content,
+                input_label: inputLabel || '',
+                input_placeholder: inputPlaceholder || '',
+                input_hint: inputHint || ''
             };
 
             configManager.prompts.push(newPrompt);
@@ -794,6 +820,9 @@
             document.getElementById('promptName').value = '';
             document.getElementById('promptKey').value = '';
             document.getElementById('promptContent').value = '';
+            document.getElementById('promptInputLabel').value = '';
+            document.getElementById('promptInputPlaceholder').value = '';
+            document.getElementById('promptInputHint').value = '';
             
             renderPromptList();
             updateSystemInfo();
@@ -817,6 +846,13 @@
                         </h4>
                         <p class="text-gray-500 text-sm">键值: ${prompt.key}</p>
                         ${prompt.prompt ? `<p class="text-gray-400 text-xs mt-1 truncate">${prompt.prompt.substring(0, 100)}${prompt.prompt.length > 100 ? '...' : ''}</p>` : '<p class="text-gray-400 text-xs">使用内置模板</p>'}
+                        ${(prompt.input_label || prompt.input_placeholder || prompt.input_hint) ? `
+                            <div class="mt-2 space-y-1">
+                                ${prompt.input_label ? `<p class="text-gray-400 text-xs">标签: ${prompt.input_label}</p>` : ''}
+                                ${prompt.input_placeholder ? `<p class="text-gray-400 text-xs">占位符: ${prompt.input_placeholder}</p>` : ''}
+                                ${prompt.input_hint ? `<p class="text-gray-400 text-xs">说明: ${prompt.input_hint}</p>` : ''}
+                            </div>
+                        ` : ''}
                         <span class="text-yellow-400 text-xs">自定义风格</span>
                     </div>
                     <button onclick="removePrompt(${index})" class="text-red-400 hover:text-red-300 ml-3">
