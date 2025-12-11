@@ -31,89 +31,26 @@
             height: 24px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .carousel-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+        .carousel-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .carousel-image {
-            position: absolute;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(55, 65, 81, 0.5);
-            max-width: 90%;
-            max-height: 350px;
-            object-fit: contain;
+            position: absolute; opacity: 0; transition: opacity 0.5s ease-in-out;
+            border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(55, 65, 81, 0.5); max-width: 90%; max-height: 350px; object-fit: contain;
         }
-        .carousel-image.active {
-            opacity: 1;
-        }
-        .download-btn {
-            animation: pulse-download 2s infinite;
-        }
-        @keyframes pulse-download {
-            0%, 50%, 100% { transform: translateY(0px); }
-            25%, 75% { transform: translateY(-3px); }
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .style-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid transparent;
-            overflow: hidden;
-            position: relative;
-        }
-        .style-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(59, 130, 246, 0.5);
-        }
-        .style-card.selected {
-            border-color: #3b82f6;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-        }
-        .style-card .thumbnail {
-            transition: transform 0.3s ease;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            aspect-ratio: 1/1;
-        }
-        .style-card:hover .thumbnail {
-            transform: scale(1.05);
-        }
-        .input-hint {
-            color: #6b7280;
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-        }
-        .section-title {
-            position: relative;
-            display: inline-block;
-        }
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, #3b82f6, transparent);
-        }
+        .carousel-image.active { opacity: 1; }
+        .download-btn { animation: pulse-download 2s infinite; }
+        @keyframes pulse-download { 0%, 50%, 100% { transform: translateY(0px);} 25%, 75% { transform: translateY(-3px);} }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
+        .style-card { transition: all 0.3s ease; cursor: pointer; border: 2px solid transparent; overflow: hidden; position: relative; }
+        .style-card:hover { transform: translateY(-4px); border-color: rgba(59, 130, 246, 0.5); }
+        .style-card.selected { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        .style-card .thumbnail { transition: transform 0.3s ease; width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1/1; }
+        .style-card:hover .thumbnail { transform: scale(1.05); }
+        .input-hint { color: #6b7280; font-size: 0.75rem; margin-top: 0.5rem; }
+        .section-title { position: relative; display: inline-block; }
+        .section-title::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 100%; height: 2px; background: linear-gradient(90deg, #3b82f6, transparent); }
     </style>
 </head>
 <body class="flex flex-col items-center p-4 md:p-8">
@@ -140,7 +77,7 @@
             <p class="text-gray-500 text-xs mt-2">Powered by Gemini AI • 已收录 <span id="styleCount">9</span> 种艺术风格，持续更新中...</p>
         </header>
 
-        <!-- 第一步：风格选择（九宫格） - 移到顶部 -->
+        <!-- 第一步：风格选择（九宫格） -->
         <section class="mb-8">
             <h2 class="text-lg font-semibold text-gray-300 mb-4 section-title">① 选择风格</h2>
             <div id="styleGrid" class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3 md:gap-4">
@@ -153,7 +90,13 @@
             
             <!-- 左侧：输入控制面板 -->
             <div class="w-full lg:w-1/3 bg-[#18181b] border border-gray-800 rounded-2xl p-6 md:p-8">
-                <h2 class="text-lg font-semibold text-gray-300 mb-4 section-title">② 输入内容</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-300 section-title">② 输入内容</h2>
+                    <!-- BYOK 按钮 -->
+                    <button id="openKeyModalBtn" type="button" class="text-xs px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition shadow">
+                        添加自己的 key
+                    </button>
+                </div>
                 
                 <form id="artForm" class="space-y-6">
                     <!-- 动态输入框 -->
@@ -168,7 +111,7 @@
                     <!-- 隐藏的风格值 -->
                     <input type="hidden" id="selectedStyle" name="style" value="blackboard">
 
-                    <!-- 生成按钮 -->
+                    <!-- 生成按钮 + 剩余额度 -->
                     <div>
                         <button type="submit" id="generateBtn"
                             class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -177,7 +120,7 @@
                             </svg>
                             <span>生成作品</span>
                         </button>
-                        <p id="limitCounter" class="text-center text-xs text-gray-500 mt-3">今日剩余免费额度: 3/3</p>
+                        <p id="limitCounter" class="text-center text-xs text-gray-500 mt-3">今日免费剩余：3/3</p>
                     </div>
                     
                     <!-- 状态信息 -->
@@ -267,26 +210,47 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold text-white mb-2">今日灵感已耗尽</h2>
-                <p class="text-gray-400 text-sm">每天限制免费生成 3 次，明天自动重置。</p>
+                <h2 class="text-2xl font-bold text-white mb-2">今日免费额度已用完</h2>
+                <p class="text-gray-400 text-sm">你可以：</p>
             </div>
-            <div class="space-y-4">
+            <div class="space-y-3">
+                <button onclick="openKeyModal()" class="block w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center space-x-2">
+                    <span>添加自己的 Key（无限制）</span>
+                </button>
                 <a href="https://github.com/keenturbo/AI-Chalkboard-Art" target="_blank" class="block w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center space-x-2">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span>在 GitHub 上免费部署同款</span>
+                    <span>自部署（免费+自用Key）</span>
                 </a>
                 <button onclick="toggleDonate()" class="block w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                    <span>请作者喝杯咖啡</span>
+                    <span>打赏作者以维持运行</span>
                 </button>
-                <div id="donateArea" class="hidden mt-4 p-4 bg-white rounded-lg">
+                <div id="donateArea" class="hidden mt-2 p-4 bg-white rounded-lg">
                     <img src="https://pic.snippet.pp.ua/generated/IMG_4859.jpeg" alt="赞赏码" class="w-48 h-48 object-contain mx-auto">
                     <p class="text-gray-800 text-xs mt-2 font-medium">微信扫码</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BYOK 弹窗 -->
+    <div id="keyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-[#18181b] border border-gray-700 rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-7 text-left relative">
+            <button onclick="closeKeyModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <h3 class="text-xl font-semibold text-white mb-2">添加你的 Gemini API Key</h3>
+            <p class="text-gray-400 text-sm mb-4">Key 仅保存在你的浏览器 LocalStorage，不会上传到服务器。优先使用你的付费/高配 Key，避免公共额度耗尽。</p>
+            <label class="block text-sm text-gray-300 mb-2" for="customKeyInput">Gemini API Key</label>
+            <input id="customKeyInput" type="password" placeholder="填写你的付费层级 aistudio Key" 
+                class="w-full bg-[#0f0f10] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition mb-3">
+            <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
+                <span>保存后将优先调用你的 Key</span>
+                <button type="button" onclick="toggleKeyVisible()" class="text-blue-400 hover:text-blue-300">显示/隐藏</button>
+            </div>
+            <div class="flex flex-col space-y-3">
+                <button onclick="saveCustomKey()" class="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold py-3 rounded-lg transition">保存</button>
+                <button onclick="clearCustomKey()" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 font-medium py-3 rounded-lg transition">清除已保存的 Key</button>
             </div>
         </div>
     </div>
@@ -308,14 +272,45 @@
         const carouselContainer = document.getElementById('carouselContainer');
         const progressBar = document.getElementById('progressBar');
         const styleGrid = document.getElementById('styleGrid');
+        const keyModal = document.getElementById('keyModal');
+        const customKeyInput = document.getElementById('customKeyInput');
+        const openKeyModalBtn = document.getElementById('openKeyModalBtn');
 
         const MAX_DAILY_LIMIT = 3;
 
-        // === 配置数据 ===
-        let SITE_CONFIG = {
-            gallery_images: [],
-            prompts: []
-        };
+        let SITE_CONFIG = { gallery_images: [], prompts: [] };
+
+        // === BYOK 逻辑 ===
+        function loadCustomKey() {
+            return localStorage.getItem('gemini_user_key') || '';
+        }
+        function saveCustomKey() {
+            const key = customKeyInput.value.trim();
+            if (!key) {
+                alert('请输入有效的 Key');
+                return;
+            }
+            localStorage.setItem('gemini_user_key', key);
+            alert('已保存，将优先使用你的 Key');
+            closeKeyModal();
+        }
+        function clearCustomKey() {
+            localStorage.removeItem('gemini_user_key');
+            customKeyInput.value = '';
+            alert('已清除自定义 Key');
+        }
+        function openKeyModal() {
+            customKeyInput.value = loadCustomKey();
+            keyModal.classList.remove('hidden');
+        }
+        function closeKeyModal() {
+            keyModal.classList.add('hidden');
+        }
+        function toggleKeyVisible() {
+            const type = customKeyInput.type === 'password' ? 'text' : 'password';
+            customKeyInput.type = type;
+        }
+        openKeyModalBtn.addEventListener('click', openKeyModal);
 
         // === 加载配置 ===
         async function loadSiteConfig() {
@@ -326,17 +321,10 @@
                     SITE_CONFIG = config;
                     updateStyleGrid();
                     document.getElementById('styleCount').textContent = config.prompts.length;
-                    console.log('已加载管理员配置');
                 }
             } catch (error) {
                 console.error('加载配置失败，使用默认配置:', error);
-                // 使用默认配置
-                SITE_CONFIG = {
-                    gallery_images: [],
-                    prompts: [
-                        { key: 'blackboard', name: '黑板粉笔画' }
-                    ]
-                };
+                SITE_CONFIG = { gallery_images: [], prompts: [ { key: 'blackboard', name: '黑板粉笔画' } ] };
                 updateStyleGrid();
             }
         }
@@ -344,20 +332,10 @@
         // === 更新风格网格 ===
         function updateStyleGrid() {
             styleGrid.innerHTML = '';
-            
             const emojiMap = {
-                'blackboard': '🏫',
-                'cloud': '☁️',
-                'textbook': '✏️',
-                'zombie': '🧟',
-                'punk': '🎤',
-                'Cyber': '🤖',
-                'star': '🌌',
-                'fly': '🎆',
-                'brand_miniature': '🏬'
+                'blackboard': '🏫','cloud': '☁️','textbook': '✏️','zombie': '🧟',
+                'punk': '🎤','Cyber': '🤖','star': '🌌','fly': '🎆','brand_miniature': '🏬'
             };
-
-            // 为每个风格设置默认缩略图
             const fallbackThumbnails = {
                 'blackboard': 'https://pic.icon.pp.ua/generated/IMG_4874.jpeg',
                 'cloud': 'https://pic.icon.pp.ua/generated/IMG_4837.jpeg',
@@ -369,12 +347,9 @@
                 'fly': 'https://pic.icon.pp.ua/generated/IMG_4855.jpeg',
                 'brand_miniature': 'https://pic.icon.pp.ua/generated/IMG_4973.jpeg'
             };
-
             SITE_CONFIG.prompts.forEach(prompt => {
                 const emoji = emojiMap[prompt.key] || '🎨';
-                // 优先使用KV中的thumbnail_url，否则使用fallback
                 const thumbnail = prompt.thumbnail_url || fallbackThumbnails[prompt.key] || fallbackThumbnails['blackboard'];
-                
                 const card = document.createElement('div');
                 card.className = `style-card p-3 bg-gray-800 rounded-lg cursor-pointer ${prompt.key === 'blackboard' ? 'selected' : ''}`;
                 card.dataset.key = prompt.key;
@@ -386,12 +361,9 @@
                         </div>
                     </div>
                 `;
-                
                 card.addEventListener('click', () => selectStyle(prompt.key));
                 styleGrid.appendChild(card);
             });
-
-            // 默认选中第一个风格
             if (SITE_CONFIG.prompts.length > 0) {
                 selectStyle(SITE_CONFIG.prompts[0].key);
             }
@@ -401,39 +373,16 @@
         function selectStyle(styleKey) {
             const prompt = SITE_CONFIG.prompts.find(p => p.key === styleKey);
             if (!prompt) return;
-            
-            // 更新选中状态
             document.querySelectorAll('.style-card').forEach(card => {
-                if (card.dataset.key === styleKey) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
+                card.classList.toggle('selected', card.dataset.key === styleKey);
             });
-            
-            // 更新隐藏值
             document.getElementById('selectedStyle').value = styleKey;
-            
-            // 更新输入框标签
             document.getElementById('inputLabel').textContent = prompt.input_label || '输入内容';
-            
-            // 更新占位符
             document.getElementById('character').placeholder = prompt.input_placeholder || '请输入内容';
-            
-            // 更新提示文字
             document.getElementById('inputHint').textContent = prompt.input_hint || '输入内容，AI 将为您创作艺术作品';
-            
-            // 更新当前风格显示
             const emojiMap = {
-                'blackboard': '🏫',
-                'cloud': '☁️',
-                'textbook': '✏️',
-                'zombie': '🧟',
-                'punk': '🎤',
-                'Cyber': '🤖',
-                'star': '🌌',
-                'fly': '🎆',
-                'brand_miniature': '🏬'
+                'blackboard': '🏫','cloud': '☁️','textbook': '✏️','zombie': '🧟',
+                'punk': '🎤','Cyber': '🤖','star': '🌌','fly': '🎆','brand_miniature': '🏬'
             };
             document.getElementById('currentStyleEmoji').textContent = emojiMap[styleKey] || '🎨';
             document.getElementById('currentStyleText').textContent = prompt.name || styleKey;
@@ -442,101 +391,40 @@
         // === 轮播管理器 ===
         class StyleCarouselManager {
             constructor() {
-                this.currentIndex = 0;
-                this.pool = [];
-                this.scheduleInterval = null;
-                this.isRunning = false;
+                this.currentIndex = 0; this.pool = []; this.scheduleInterval = null; this.isRunning = false;
             }
-
             startCarousel(stopTime) {
-                this.stopCarousel();
-                this.isRunning = true;
-                
-                // 使用gallery_images作为轮播池
-                this.pool = SITE_CONFIG.gallery_images.length > 0 ? 
-                    SITE_CONFIG.gallery_images.slice(0, 8) : 
-                    ['https://pic.icon.pp.ua/generated/IMG_4874.jpeg'];
-                
-                this.initCarouselContainer();
-                this.showImage(0);
-                
+                this.stopCarousel(); this.isRunning = true;
+                this.pool = SITE_CONFIG.gallery_images.length > 0 ? SITE_CONFIG.gallery_images.slice(0, 8) : ['https://pic.icon.pp.ua/generated/IMG_4874.jpeg'];
+                this.initCarouselContainer(); this.showImage(0);
                 this.scheduleInterval = setInterval(() => {
-                    if (!this.isRunning || Date.now() >= stopTime) {
-                        this.stopCarousel();
-                        return;
-                    }
-                    
-                    this.currentIndex = (this.currentIndex + 1) % this.pool.length;
-                    this.showImage(this.currentIndex);
+                    if (!this.isRunning || Date.now() >= stopTime) { this.stopCarousel(); return; }
+                    this.currentIndex = (this.currentIndex + 1) % this.pool.length; this.showImage(this.currentIndex);
                 }, 4000);
             }
-
             initCarouselContainer() {
-                const img = document.createElement('img');
-                img.className = 'carousel-image active';
-                img.alt = '作品展示';
-                carouselContainer.innerHTML = '';
-                carouselContainer.appendChild(img);
+                const img = document.createElement('img'); img.className = 'carousel-image active'; img.alt = '作品展示';
+                carouselContainer.innerHTML = ''; carouselContainer.appendChild(img);
             }
-
-            stopCarousel() {
-                if (this.scheduleInterval) {
-                    clearInterval(this.scheduleInterval);
-                    this.scheduleInterval = null;
-                }
-                this.isRunning = false;
-            }
-
+            stopCarousel() { if (this.scheduleInterval) { clearInterval(this.scheduleInterval); this.scheduleInterval = null; } this.isRunning = false; }
             showImage(index) {
-                const imgSrc = this.pool[index];
-                const img = carouselContainer.querySelector('img');
-                
-                if (!img) return;
-                
-                img.onerror = () => {
-                    console.error(`轮播图片加载失败: ${imgSrc}`);
-                    if (this.pool.length > 0 && index !== 0) {
-                        img.src = this.pool[0];
-                    }
-                };
-                
+                const imgSrc = this.pool[index]; const img = carouselContainer.querySelector('img'); if (!img) return;
+                img.onerror = () => { console.error(`轮播图片加载失败: ${imgSrc}`); if (this.pool.length > 0 && index !== 0) img.src = this.pool[0]; };
                 img.src = imgSrc;
             }
         }
-
         const carouselManager = new StyleCarouselManager();
 
         // === 下载函数 ===
         async function downloadImage(url, filename) {
             try {
-                console.log('开始下载图片:', url);
-                
-                const response = await fetch(url, {
-                    mode: 'cors',
-                    credentials: 'omit'
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const blob = await response.blob();
-                const downloadUrl = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = filename;
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                URL.revokeObjectURL(downloadUrl);
-                console.log('图片下载成功:', filename);
-                
+                const response = await fetch(url, { mode: 'cors', credentials: 'omit' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                const blob = await response.blob(); const downloadUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a'); link.href = downloadUrl; link.download = filename;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(downloadUrl);
             } catch (error) {
-                console.error('下载失败:', error);
-                showStatus('下载失败，正在打开新窗口...', 'error');
-                window.open(url, '_blank');
+                console.error('下载失败:', error); showStatus('下载失败，正在打开新窗口...', 'error'); window.open(url, '_blank');
             }
         }
 
@@ -544,64 +432,29 @@
         function getDailyUsage() {
             const today = new Date().toISOString().split('T')[0];
             const storedDate = localStorage.getItem('last_usage_date');
-            
-            if (storedDate !== today) {
-                localStorage.setItem('last_usage_date', today);
-                localStorage.setItem('daily_count', '0');
-                return 0;
-            }
+            if (storedDate !== today) { localStorage.setItem('last_usage_date', today); localStorage.setItem('daily_count', '0'); return 0; }
             return parseInt(localStorage.getItem('daily_count') || '0', 10);
         }
-
-        function incrementUsage() {
-            const count = getDailyUsage();
-            localStorage.setItem('daily_count', (count + 1).toString());
-            updateCounterUI();
-        }
-
+        function incrementUsage() { const count = getDailyUsage(); localStorage.setItem('daily_count', (count + 1).toString()); updateCounterUI(); }
         function updateCounterUI() {
-            const used = getDailyUsage();
-            const remaining = Math.max(0, MAX_DAILY_LIMIT - used);
-            limitCounter.textContent = `今日剩余免费额度: ${remaining}/${MAX_DAILY_LIMIT}`;
-            
-            if (remaining === 0) {
-                limitCounter.classList.add('text-red-500');
-            } else {
-                limitCounter.classList.remove('text-red-500');
-            }
+            const used = getDailyUsage(); const remaining = Math.max(0, MAX_DAILY_LIMIT - used);
+            limitCounter.textContent = `今日免费剩余：${remaining}/${MAX_DAILY_LIMIT}`;
+            remaining === 0 ? limitCounter.classList.add('text-red-500') : limitCounter.classList.remove('text-red-500');
         }
-
-        function showLimitModal() {
-            limitModal.classList.remove('hidden');
-        }
-
-        function closeLimitModal() {
-            limitModal.classList.add('hidden');
-        }
-
-        function toggleDonate() {
-            donateArea.classList.toggle('hidden');
-        }
-
+        function showLimitModal() { limitModal.classList.remove('hidden'); }
+        function closeLimitModal() { limitModal.classList.add('hidden'); }
+        function toggleDonate() { donateArea.classList.toggle('hidden'); }
         function showStatus(msg, type = 'info') {
-            if (!msg) {
-                statusMessage.classList.add('hidden');
-                return;
-            }
+            if (!msg) { statusMessage.classList.add('hidden'); return; }
             statusMessage.textContent = msg;
             statusMessage.className = `text-center text-sm p-3 rounded ${type === 'error' ? 'bg-red-900/50 text-red-200 border border-red-800' : 'bg-gray-800 text-gray-300'}`;
             statusMessage.classList.remove('hidden');
         }
-
         function setLoading(isLoading) {
             if (isLoading) {
                 generateBtn.disabled = true;
                 generateBtn.innerHTML = '<div class="loader border-t-white w-4 h-4 mr-2"></div> 正在生成...';
-                loadingState.classList.remove('hidden');
-                resultImage.classList.add('hidden');
-                actionToolbar.classList.add('hidden');
-                placeholder.classList.add('hidden');
-                progressBar.style.width = '0%';
+                loadingState.classList.remove('hidden'); resultImage.classList.add('hidden'); actionToolbar.classList.add('hidden'); placeholder.classList.add('hidden'); progressBar.style.width = '0%';
             } else {
                 generateBtn.disabled = false;
                 generateBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg><span>生成作品</span>';
@@ -612,70 +465,53 @@
         // === 表单提交 ===
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            if (getDailyUsage() >= MAX_DAILY_LIMIT) {
+            const userKey = loadCustomKey();
+            if (getDailyUsage() >= MAX_DAILY_LIMIT && !userKey) {
                 showLimitModal();
                 return;
             }
-            
             const character = document.getElementById('character').value.trim();
             const style = document.getElementById('selectedStyle').value;
             if (!character) return;
 
-            setLoading(true);
-            showStatus(null);
-            
-            const stopTime = Date.now() + 30000;
-            carouselManager.startCarousel(stopTime);
-            
-            const steps = ["生成提示词中...", "调用 Gemini 模型...", "渲染生成中...", "保存到存储...", "完成处理..."];
+            setLoading(true); showStatus(null);
+            const stopTime = Date.now() + 30000; carouselManager.startCarousel(stopTime);
+            const steps = ["生成提示词中...", "调用模型...", "渲染生成中...", "保存到存储...", "完成处理..."];
             let stepIndex = 0;
             const stepInterval = setInterval(() => {
                 if (stepIndex < steps.length) {
-                    loadingStep.textContent = steps[stepIndex++];
-                    progressBar.style.width = `${(stepIndex / steps.length) * 100}%`;
+                    loadingStep.textContent = steps[stepIndex++]; progressBar.style.width = `${(stepIndex / steps.length) * 100}%`;
                 }
             }, 1500);
 
             try {
-                console.log('开始生成图片请求:', { character, style });
-                
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         character_name: character,
-                        style: style
+                        style: style,
+                        customKey: userKey || undefined
                     })
                 });
 
-                console.log('收到API响应:', response.status, response.statusText);
-                
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error('API错误响应:', errorData);
                     throw new Error(errorData.error || '生成失败');
                 }
 
                 const data = await response.json();
-                console.log('API响应数据:', data);
-
-                const timeout = setTimeout(() => {
-                    console.error('请求超时:', { url: '/api/generate', character, style });
-                }, 30000);
+                const timeout = setTimeout(() => { console.error('请求超时:', { url: '/api/generate', character, style }); }, 30000);
 
                 if (data.image_url) {
                     clearTimeout(timeout);
-                    incrementUsage();
+                    if (!userKey) incrementUsage();
 
                     const img = new Image();
-                    img.onload = () => {
-                        console.log('生成图片加载成功:', data.image_url);
-                    };
+                    img.onload = () => {};
                     img.onerror = (error) => {
                         console.error('生成图片加载失败:', error, data.image_url);
                         setTimeout(() => {
-                            console.log('重试加载:', data.image_url);
                             const retryImg = new Image();
                             retryImg.onload = () => console.log('重试成功:', data.image_url);
                             retryImg.src = data.image_url;
@@ -683,7 +519,6 @@
                         }, 2000);
                     };
                     img.src = data.image_url;
-
                     resultImage.src = data.image_url;
                     
                     downloadBtn.onclick = () => {
@@ -692,18 +527,11 @@
                     };
                     
                     resultImage.onload = () => {
-                        clearInterval(stepInterval);
-                        carouselManager.stopCarousel();
-                        setLoading(false);
-                        resultImage.classList.remove('hidden');
-                        placeholder.classList.add('hidden');
-                        actionToolbar.classList.remove('hidden');
+                        clearInterval(stepInterval); carouselManager.stopCarousel(); setLoading(false);
+                        resultImage.classList.remove('hidden'); placeholder.classList.add('hidden'); actionToolbar.classList.remove('hidden');
                     };
-                    
                     resultImage.onerror = () => {
-                        clearInterval(stepInterval);
-                        carouselManager.stopCarousel();
-                        setLoading(false);
+                        clearInterval(stepInterval); carouselManager.stopCarousel(); setLoading(false);
                         showStatus('图片加载失败，请检查 R2 配置', 'error');
                     };
                 } else {
@@ -712,11 +540,8 @@
                 }
 
             } catch (error) {
-                clearInterval(stepInterval);
-                carouselManager.stopCarousel();
-                setLoading(false);
-                showStatus(error.message, 'error');
-                console.error('生成错误:', error);
+                clearInterval(stepInterval); carouselManager.stopCarousel(); setLoading(false);
+                showStatus(error.message, 'error'); console.error('生成错误:', error);
             }
         });
 
@@ -724,20 +549,17 @@
         function initializeApp() {
             updateCounterUI();
             loadSiteConfig();
+            // 预填已保存的 key
+            const savedKey = loadCustomKey();
+            if (savedKey) customKeyInput.value = savedKey;
         }
 
-        // 添加键盘快捷键支持
+        // 键盘快捷键
         document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                form.dispatchEvent(new Event('submit'));
-            }
-            if (e.key === 'Escape') {
-                closeLimitModal();
-            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); form.dispatchEvent(new Event('submit')); }
+            if (e.key === 'Escape') { closeLimitModal(); closeKeyModal(); }
         });
 
-        // 页面加载时初始化
         window.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
