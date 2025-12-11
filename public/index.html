@@ -280,6 +280,16 @@
 
         let SITE_CONFIG = { gallery_images: [], prompts: [] };
 
+        // === 工具: 洗牌 ===
+        function shuffleArray(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
         // === BYOK 逻辑 ===
         function loadCustomKey() {
             return localStorage.getItem('gemini_user_key') || '';
@@ -388,14 +398,17 @@
             document.getElementById('currentStyleText').textContent = prompt.name || styleKey;
         }
 
-        // === 轮播管理器 ===
+        // === 轮播管理器（随机洗牌展示） ===
         class StyleCarouselManager {
             constructor() {
                 this.currentIndex = 0; this.pool = []; this.scheduleInterval = null; this.isRunning = false;
             }
             startCarousel(stopTime) {
                 this.stopCarousel(); this.isRunning = true;
-                this.pool = SITE_CONFIG.gallery_images.length > 0 ? SITE_CONFIG.gallery_images.slice(0, 8) : ['https://pic.icon.pp.ua/generated/IMG_4874.jpeg'];
+                const source = (SITE_CONFIG.gallery_images && SITE_CONFIG.gallery_images.length > 0)
+                    ? shuffleArray(SITE_CONFIG.gallery_images)
+                    : ['https://pic.icon.pp.ua/generated/IMG_4874.jpeg'];
+                this.pool = source.slice(0, Math.min(24, source.length)); // 随机最多取 24 张
                 this.initCarouselContainer(); this.showImage(0);
                 this.scheduleInterval = setInterval(() => {
                     if (!this.isRunning || Date.now() >= stopTime) { this.stopCarousel(); return; }
@@ -496,8 +509,19 @@
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || '生成失败');
+                    let errorText = '生成失败';
+                    let debug = null;
+                    try {
+                        const errorData = await response.json();
+                        errorText = errorData.error || errorText;
+                        debug = errorData.debug;
+                    } catch (_) {}
+                    if (!userKey && debug && debug.hasGeminiKey === false) {
+                        errorText = '未配置公共 Key，请点击“添加自己的 key”或在后台配置环境变量后重试。';
+                    } else if (!userKey && debug && debug.configuredApis === 0) {
+                        errorText = '没有可用的模型配置。请添加自己的 key，或在后台配置 API。';
+                    }
+                    throw new Error(errorText);
                 }
 
                 const data = await response.json();
@@ -549,7 +573,6 @@
         function initializeApp() {
             updateCounterUI();
             loadSiteConfig();
-            // 预填已保存的 key
             const savedKey = loadCustomKey();
             if (savedKey) customKeyInput.value = savedKey;
         }
